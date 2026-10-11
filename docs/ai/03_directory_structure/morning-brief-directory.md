@@ -8,7 +8,8 @@ morning-brief/
 ├── public/
 ├── src/app/                # layout.tsx, page.tsx, globals.css, favicon.ico (기본 템플릿)
 ├── src/widgets/            # types.ts (Widget, WidgetResult), runWidget.ts (U1)
-├── __tests__/              # Jest 테스트 (smoke, widgets/runWidget)
+│   └── weather/            # fetch.ts (zod 검증), normalize.ts, index.ts (U2)
+├── __tests__/              # Jest 테스트 (smoke, widgets/runWidget, widgets/weather)
 ├── jest.config.ts
 ├── next.config.ts
 ├── eslint.config.mjs

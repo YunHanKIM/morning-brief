@@ -10,6 +10,7 @@
 | 스타일링 | Tailwind CSS 4 |
 | 린트 | ESLint (eslint-config-next) |
 | 테스트 | Jest 30 (`next/jest`, `testEnvironment: node`), `@types/jest`, `ts-node` |
+| 데이터 검증 | zod 4.6.5 (외부 API 응답, U2에서 도입) |
 
 - 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트가 필요해지면 `jsdom` 환경,
   React Testing Library, `@testing-library/jest-dom`을 그때 추가한다.
@@ -22,7 +23,6 @@
 | 컴포넌트 | shadcn/ui, lucide-react |
 | 차트 | Recharts (이력 차트, MVP 이후) |
 | 클라이언트 데이터 패칭 | TanStack Query |
-| 데이터 검증 | zod (외부 API 응답, 요청 바디) |
 | 알림 | Telegram Bot API (`sendMessage`, SDK 없이 fetch) |
 | 스케줄링 | GitHub Actions cron → `/api/cron/brief` |
 | 저장소 | 미정 — Supabase(Postgres) 또는 Vercel KV |

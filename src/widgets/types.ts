@@ -2,8 +2,8 @@ export type WidgetResult<T> =
   | { status: 'ok'; data: T }
   | { status: 'error'; message: string }
 
-export interface Widget<T> {
+export interface Widget<T, R = unknown> {
   name: string
-  fetch: () => Promise<unknown>
-  normalize: (raw: unknown) => T
+  fetch: () => Promise<R>
+  normalize: (raw: R) => T
 }
