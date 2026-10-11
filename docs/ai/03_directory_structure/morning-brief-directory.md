@@ -1,6 +1,24 @@
 # Morning Brief — 디렉터리 구조
 
-> **계획안**이다. `create-next-app` 실행 후 실제 구조와 대조해 갱신한다.
+## 현재 구조 (create-next-app + Jest 설정 직후)
+
+```
+morning-brief/
+├── docs/ai/                # AI 하네스 문서
+├── public/
+├── src/app/                # layout.tsx, page.tsx, globals.css, favicon.ico (기본 템플릿)
+├── __tests__/              # Jest 테스트
+├── jest.config.ts
+├── next.config.ts
+├── eslint.config.mjs
+├── tsconfig.json
+└── package.json
+```
+
+`.github/`, `src/widgets/`, `src/lib/`, `src/components/ui/`, `src/types/`, `src/app/api/`, `src/app/history/`는
+아직 없다. 아래는 목표 구조이며 해당 단위를 구현할 때 만든다.
+
+## 목표 구조 (계획안)
 
 ```
 morning-brief/

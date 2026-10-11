@@ -1,13 +1,25 @@
 # Morning Brief — 기술 스택
 
-> 계획 단계의 선택이다. `create-next-app` 실행 후 실제 버전으로 갱신한다.
+## 현재 설치됨 (package.json 기준)
 
 | 구분 | 값 |
 |------|-----|
-| 프레임워크 | Next.js (App Router) |
-| 언어 | TypeScript |
-| 스타일링 | Tailwind CSS + shadcn/ui |
-| 아이콘 | lucide-react |
+| 프레임워크 | Next.js 16.4.0 (App Router, `src/` 디렉터리) |
+| UI 런타임 | React 19.3.0 |
+| 언어 | TypeScript 5 |
+| 스타일링 | Tailwind CSS 4 |
+| 린트 | ESLint (eslint-config-next) |
+| 테스트 | Jest 30 (`next/jest`, `testEnvironment: node`), `@types/jest`, `ts-node` |
+
+- 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트가 필요해지면 `jsdom` 환경,
+  React Testing Library, `@testing-library/jest-dom`을 그때 추가한다.
+- `@/*` import alias를 테스트에서 쓰려면 그때 `jest.config.ts`에 `moduleNameMapper`를 추가한다.
+
+## 계획 (아직 설치하지 않음 — 필요한 단위에서 추가)
+
+| 구분 | 값 |
+|------|-----|
+| 컴포넌트 | shadcn/ui, lucide-react |
 | 차트 | Recharts (이력 차트, MVP 이후) |
 | 클라이언트 데이터 패칭 | TanStack Query |
 | 데이터 검증 | zod (외부 API 응답, 요청 바디) |
