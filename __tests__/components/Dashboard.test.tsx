@@ -39,6 +39,11 @@ const news = {
   },
 }
 
+const quote = {
+  status: 'ok' as const,
+  data: { quote: 'Stay hungry.', author: 'Steve', translation: '계속 갈망하라.' },
+}
+
 const statusOf = (name: string) =>
   within(screen.getByRole('region', { name })).getByRole('status').textContent
 
@@ -136,5 +141,30 @@ describe('Dashboard', () => {
   it('loading이면 뉴스 카드도 로딩 상태다', () => {
     render(<Dashboard city={seoul} results={{}} loading />)
     expect(statusOf('개발 뉴스')).toContain('불러오는 중')
+  })
+
+  it('오늘의 한마디 카드까지 모든 카드를 보여준다', () => {
+    render(<Dashboard city={seoul} results={{ weather, exchange, news, quote }} />)
+    expect(screen.getByRole('region', { name: '오늘의 한마디' })).toBeTruthy()
+    expect(screen.getByText('Stay hungry.')).toBeTruthy()
+    expect(screen.getByText('계속 갈망하라.')).toBeTruthy()
+  })
+
+  it('명언이 실패해도 나머지 카드는 렌더된다', () => {
+    render(
+      <Dashboard
+        city={seoul}
+        results={{ weather, exchange, news, quote: { status: 'error', message: 'boom' } }}
+      />,
+    )
+    const alert = within(screen.getByRole('region', { name: '오늘의 한마디' })).getByRole('alert')
+    expect(alert.textContent).toContain('boom')
+    expect(screen.getByText('18.4°')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Zig 템플릿' })).toBeTruthy()
+  })
+
+  it('loading이면 명언 카드도 로딩 상태다', () => {
+    render(<Dashboard city={seoul} results={{}} loading />)
+    expect(statusOf('오늘의 한마디')).toContain('불러오는 중')
   })
 })

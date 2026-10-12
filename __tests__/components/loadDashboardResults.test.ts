@@ -2,53 +2,66 @@ import { loadDashboardResults } from '../../src/components/loadDashboardResults'
 import { CURRENCIES } from '../../src/widgets/exchange/currencies'
 import { POPULAR_CITIES } from '../../src/widgets/weather/city'
 
-const busan = POPULAR_CITIES[1]
+// cacheLife는 Next 런타임 밖(Jest)에서 던지므로 가짜로 바꾼다
+jest.mock('next/cache', () => ({ cacheLife: jest.fn() }))
 
+const busan = POPULAR_CITIES[1]
 const weatherBody = {
   current: { temperature_2m: 19.6, weather_code: 1 },
   daily: { temperature_2m_max: [25.5], temperature_2m_min: [14.1] },
 }
 const rates = Object.fromEntries(CURRENCIES.map((code, i) => [code, i + 1]))
 
-function mockFetch(exchangeStatus = 200) {
+type Service = 'weather' | 'exchange' | 'news' | 'quote'
+
+// 실패시킬 서비스를 지정할 수 있는 가짜 fetch
+function mockFetch(failing: Service[] = []) {
+  const json = (value: unknown) => new Response(JSON.stringify(value), { status: 200 })
+  const fail = () => new Response('fail', { status: 500 })
   return jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(String(input))
-    if (url.hostname === 'hacker-news.firebaseio.com') {
-      if (url.pathname.endsWith('/topstories.json')) return new Response(JSON.stringify([11, 12]), { status: 200 })
-      const id = Number(url.pathname.match(/item\/(\d+)\.json/)?.[1])
-      return new Response(
-        JSON.stringify({ id, type: 'story', title: `글 ${id}`, score: 5, url: `https://example.com/${id}` }),
-        { status: 200 },
-      )
+    switch (url.hostname) {
+      case 'hacker-news.firebaseio.com': {
+        if (failing.includes('news')) return fail()
+        if (url.pathname.endsWith('/topstories.json')) return json([11, 12])
+        const id = Number(url.pathname.match(/item\/(\d+)\.json/)?.[1])
+        return json({ id, type: 'story', title: `글 ${id}`, score: 5, url: `https://example.com/${id}` })
+      }
+      case 'api.frankfurter.dev':
+        return failing.includes('exchange')
+          ? fail()
+          : json({ amount: 1, base: 'USD', date: '2026-10-09', rates })
+      case 'zenquotes.io':
+        return failing.includes('quote') ? fail() : json([{ q: 'Stay hungry.', a: 'Steve' }])
+      case 'api.mymemory.translated.net':
+        return json({ responseData: { translatedText: '계속 갈망하라.' }, responseStatus: 200 })
+      default:
+        return failing.includes('weather') ? fail() : json(weatherBody)
     }
-    if (url.hostname === 'api.frankfurter.dev') {
-      if (exchangeStatus !== 200) return new Response('fail', { status: exchangeStatus })
-      return new Response(
-        JSON.stringify({ amount: 1, base: 'USD', date: '2026-10-09', rates }),
-        { status: 200 },
-      )
-    }
-    return new Response(JSON.stringify(weatherBody), { status: 200 })
   })
 }
+
+const hostsOf = (spy: jest.SpyInstance) =>
+  spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
 
 describe('loadDashboardResults', () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  it('날씨와 모든 통화의 환율을 각각 한 번씩만 조회해 반환한다', async () => {
+  it('날씨·환율·뉴스·명언을 각각 조회해 모두 반환한다', async () => {
     const spy = mockFetch()
 
     const results = await loadDashboardResults(busan)
 
-    const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
-    expect(hosts.sort()).toEqual([
+    expect(hostsOf(spy).sort()).toEqual([
       'api.frankfurter.dev',
+      'api.mymemory.translated.net',
       'api.open-meteo.com',
       'hacker-news.firebaseio.com',
       'hacker-news.firebaseio.com',
       'hacker-news.firebaseio.com',
+      'zenquotes.io',
     ])
     expect(results.exchange).toEqual({
       status: 'ok',
@@ -56,6 +69,10 @@ describe('loadDashboardResults', () => {
     })
     expect(results.weather?.status).toBe('ok')
     expect(results.news?.status).toBe('ok')
+    expect(results.quote).toEqual({
+      status: 'ok',
+      data: { quote: 'Stay hungry.', author: 'Steve', translation: '계속 갈망하라.' },
+    })
   })
 
   it('날씨는 받은 도시의 좌표로 조회한다', async () => {
@@ -70,41 +87,31 @@ describe('loadDashboardResults', () => {
     expect(weatherUrl?.searchParams.get('longitude')).toBe(String(busan.longitude))
   })
 
-  it('도시가 없으면 날씨는 조회하지 않고 환율만 반환한다', async () => {
+  it('도시가 없으면 날씨는 조회하지 않고 나머지만 반환한다', async () => {
     const spy = mockFetch()
 
     const results = await loadDashboardResults(null)
 
-    const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
-    expect(hosts.filter((host) => host === 'api.open-meteo.com')).toEqual([])
-    expect(hosts).toContain('api.frankfurter.dev')
+    expect(hostsOf(spy)).not.toContain('api.open-meteo.com')
     expect(results.weather).toBeUndefined()
     expect(results.exchange?.status).toBe('ok')
+    expect(results.news?.status).toBe('ok')
+    expect(results.quote?.status).toBe('ok')
   })
 
-  it('환율이 실패해도 날씨는 정상으로 반환한다', async () => {
-    mockFetch(503)
+  it.each<[Service, Service[]]>([
+    ['weather', ['exchange', 'news', 'quote']],
+    ['exchange', ['weather', 'news', 'quote']],
+    ['news', ['weather', 'exchange', 'quote']],
+    ['quote', ['weather', 'exchange', 'news']],
+  ])('%s가 실패해도 나머지는 정상으로 반환한다', async (failed, others) => {
+    mockFetch([failed])
 
     const results = await loadDashboardResults(busan)
 
-    expect(results.exchange?.status).toBe('error')
-    expect(results.weather?.status).toBe('ok')
-  })
-
-  it('뉴스가 실패해도 날씨와 환율은 정상으로 반환한다', async () => {
-    jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const url = new URL(String(input))
-      if (url.hostname === 'hacker-news.firebaseio.com') return new Response('fail', { status: 500 })
-      if (url.hostname === 'api.frankfurter.dev') {
-        return new Response(JSON.stringify({ amount: 1, base: 'USD', date: '2026-10-09', rates }), { status: 200 })
-      }
-      return new Response(JSON.stringify(weatherBody), { status: 200 })
-    })
-
-    const results = await loadDashboardResults(busan)
-
-    expect(results.news?.status).toBe('error')
-    expect(results.weather?.status).toBe('ok')
-    expect(results.exchange?.status).toBe('ok')
+    expect(results[failed]?.status).toBe('error')
+    for (const other of others) {
+      expect(results[other]?.status).toBe('ok')
+    }
   })
 })

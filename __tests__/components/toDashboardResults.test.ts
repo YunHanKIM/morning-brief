@@ -94,4 +94,41 @@ describe('toDashboardResults', () => {
       expect(toDashboardResults({ news: { status: 'ok', data: bad } }).news?.status).toBe('error')
     })
   })
+
+  describe('quote', () => {
+    const quote = { quote: 'Hi', author: 'Me', translation: '안녕' }
+
+    it('올바른 명언 ok 결과는 그대로 통과시킨다', () => {
+      expect(toDashboardResults({ quote: { status: 'ok', data: quote } }).quote).toEqual({
+        status: 'ok',
+        data: quote,
+      })
+    })
+
+    it('번역이 null이어도 올바른 결과다', () => {
+      const data = { ...quote, translation: null }
+      expect(toDashboardResults({ quote: { status: 'ok', data } }).quote).toEqual({ status: 'ok', data })
+    })
+
+    it('error 결과는 그대로 통과시킨다', () => {
+      expect(toDashboardResults({ quote: { status: 'error', message: 'boom' } }).quote).toEqual({
+        status: 'error',
+        message: 'boom',
+      })
+    })
+
+    it.each([
+      ['명언 누락', { author: 'Me', translation: null }],
+      ['명언이 빈 문자열', { ...quote, quote: '' }],
+      ['명언이 공백뿐', { ...quote, quote: '   ' }],
+      ['저자가 빈 문자열', { ...quote, author: '' }],
+      ['저자가 공백뿐', { ...quote, author: '   ' }],
+      ['저자가 숫자', { ...quote, author: 1 }],
+      ['번역이 숫자', { ...quote, translation: 1 }],
+      ['번역 필드 없음(undefined)', { quote: 'Hi', author: 'Me' }],
+      ['null', null],
+    ])('ok인데 데이터 모양이 틀리면 error로 바꾼다: %s', (_name, bad) => {
+      expect(toDashboardResults({ quote: { status: 'ok', data: bad } }).quote?.status).toBe('error')
+    })
+  })
 })

@@ -1,6 +1,7 @@
 import { CURRENCIES } from '../widgets/exchange/currencies'
 import type { ExchangeData } from '../widgets/exchange/normalize'
 import type { NewsData } from '../widgets/news/normalize'
+import type { QuoteData } from '../widgets/quote/normalize'
 import type { WidgetResult } from '../widgets/types'
 import type { WeatherData } from '../widgets/weather/normalize'
 
@@ -8,6 +9,7 @@ export interface DashboardResults {
   weather?: WidgetResult<WeatherData>
   exchange?: WidgetResult<ExchangeData>
   news?: WidgetResult<NewsData>
+  quote?: WidgetResult<QuoteData>
 }
 
 function isWeatherData(value: unknown): value is WeatherData {
@@ -58,6 +60,18 @@ function isNewsData(value: unknown): value is NewsData {
   })
 }
 
+function isQuoteData(value: unknown): value is QuoteData {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return (
+    typeof v.quote === 'string' &&
+    v.quote.trim().length > 0 &&
+    typeof v.author === 'string' &&
+    v.author.trim().length > 0 &&
+    (v.translation === null || typeof v.translation === 'string')
+  )
+}
+
 // 모양이 틀린 ok 결과는 error로 바꾼다
 function narrow<T>(
   result: WidgetResult<unknown> | undefined,
@@ -75,5 +89,6 @@ export function toDashboardResults(raw: Record<string, WidgetResult<unknown>>): 
     weather: narrow(raw.weather, isWeatherData, '날씨 데이터 형식이 올바르지 않습니다'),
     exchange: narrow(raw.exchange, isExchangeData, '환율 데이터 형식이 올바르지 않습니다'),
     news: narrow(raw.news, isNewsData, '뉴스 데이터 형식이 올바르지 않습니다'),
+    quote: narrow(raw.quote, isQuoteData, '명언 데이터 형식이 올바르지 않습니다'),
   }
 }
