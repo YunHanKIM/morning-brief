@@ -63,7 +63,7 @@
 | U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입. 컴포넌트 테스트 파일에만 `@jest-environment jsdom` 독블록 사용(전역 `node` 유지), `jest-dom` 미도입 |
 | U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저(`document.cookie`)에서 저장하고 서버는 읽을 때마다 `parseCity`로 검증. 매일 아침 자동 브리핑의 대표 도시는 서버 저장소(U10) 이후 연결. 완료 |
 | U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자(Client Component, 이미 받은 환율에서 즉시 전환. 한 번에 조회: U5c), page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 초기값 연결(`loadDashboardResults`) | U5a·U5b 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
-| U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃 |
+| U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃. U6a 완료: HN 상위 10건 조회 → 걸러낸 뒤 5건, 링크는 http(s)만(아니면 토론 주소) |
 | U7a / U7b | GitHub 활동 — a 로직 / b 카드 | 토큰 선택, rate limit 오류 처리 |
 | U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | 출처 표기, 소스 확정 |
 | U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트 |
