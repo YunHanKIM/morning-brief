@@ -55,6 +55,17 @@ describe('loadDashboardResults', () => {
     expect(weatherUrl?.searchParams.get('longitude')).toBe(String(busan.longitude))
   })
 
+  it('도시가 없으면 날씨는 조회하지 않고 환율만 반환한다', async () => {
+    const spy = mockFetch()
+
+    const results = await loadDashboardResults(null)
+
+    const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
+    expect(hosts).toEqual(['api.frankfurter.dev'])
+    expect(results.weather).toBeUndefined()
+    expect(results.exchange?.status).toBe('ok')
+  })
+
   it('환율이 실패해도 날씨는 정상으로 반환한다', async () => {
     mockFetch(503)
 

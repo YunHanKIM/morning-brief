@@ -1,6 +1,15 @@
 /** @jest-environment jsdom */
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import { loadWeatherAction } from '../../src/components/cityActions'
 import { Dashboard } from '../../src/components/Dashboard'
+import { POPULAR_CITIES } from '../../src/widgets/weather/city'
+
+jest.mock('../../src/components/cityActions', () => ({
+  searchCitiesAction: jest.fn(),
+  loadWeatherAction: jest.fn(),
+}))
+
+const seoul = POPULAR_CITIES[0]
 
 const weather = {
   status: 'ok' as const,
@@ -20,14 +29,14 @@ const statusOf = (name: string) =>
 
 describe('Dashboard', () => {
   it('제목과 날씨·환율 카드를 보여준다', () => {
-    render(<Dashboard results={{ weather, exchange }} />)
+    render(<Dashboard city={seoul} results={{ weather, exchange }} />)
     expect(screen.getByRole('heading', { level: 1, name: 'Morning Brief' })).toBeTruthy()
     expect(screen.getByText('18.4°')).toBeTruthy()
     expect(screen.getByText('1 USD = 1341.49 KRW')).toBeTruthy()
   })
 
   it('날씨 위젯이 실패해도 대시보드와 환율 카드는 렌더된다', () => {
-    render(<Dashboard results={{ weather: { status: 'error', message: 'boom' }, exchange }} />)
+    render(<Dashboard city={seoul} results={{ weather: { status: 'error', message: 'boom' }, exchange }} />)
     expect(screen.getByRole('heading', { level: 1, name: 'Morning Brief' })).toBeTruthy()
     const alert = within(screen.getByRole('region', { name: '날씨' })).getByRole('alert')
     expect(alert.textContent).toContain('boom')
@@ -35,13 +44,13 @@ describe('Dashboard', () => {
   })
 
   it('loading이면 두 카드 모두 로딩 상태다', () => {
-    render(<Dashboard results={{}} loading />)
+    render(<Dashboard city={seoul} results={{}} loading />)
     expect(statusOf('날씨')).toContain('불러오는 중')
     expect(statusOf('환율')).toContain('불러오는 중')
   })
 
   it('최종 결과에 위젯이 없으면 로딩이 아니라 빈 상태다', () => {
-    render(<Dashboard results={{}} />)
+    render(<Dashboard city={seoul} results={{}} />)
     expect(statusOf('날씨')).toContain('날씨 정보가 없습니다')
     expect(statusOf('환율')).toContain('환율 정보가 없습니다')
   })
@@ -56,7 +65,7 @@ describe('Dashboard', () => {
     const originalFetch = globalThis.fetch
     const fetchMock = jest.fn()
     globalThis.fetch = fetchMock
-    render(<Dashboard results={{ weather, exchange }} />)
+    render(<Dashboard city={seoul} results={{ weather, exchange }} />)
     const weatherCard = screen.getByRole('region', { name: '날씨' })
 
     fireEvent.change(screen.getByLabelText('받는 통화'), { target: { value: 'JPY' } })
@@ -66,5 +75,27 @@ describe('Dashboard', () => {
     expect(within(weatherCard).getByText('18.4°')).toBeTruthy()
     expect(fetchMock).not.toHaveBeenCalled()
     globalThis.fetch = originalFetch
+  })
+
+  it('저장된 도시가 없으면 날씨 카드에 도시 선택 안내가 보이고 환율은 그대로 보인다', () => {
+    render(<Dashboard city={null} results={{ exchange }} />)
+    expect(within(screen.getByRole('region', { name: '날씨' })).getByText('도시를 선택하세요')).toBeTruthy()
+    expect(screen.getByText('1 USD = 1341.49 KRW')).toBeTruthy()
+  })
+
+  it('도시를 바꿔도 날씨만 갱신되고 환율 카드는 그대로다', async () => {
+    jest.mocked(loadWeatherAction).mockResolvedValue({
+      status: 'ok',
+      data: { temperature: 23, condition: '흐림', high: 25, low: 22 },
+    })
+    render(<Dashboard city={seoul} results={{ weather, exchange }} />)
+    const exchangeCard = screen.getByRole('region', { name: '환율' })
+
+    fireEvent.click(screen.getByRole('button', { name: '도시 바꾸기' }))
+    fireEvent.click(screen.getByRole('button', { name: '제주' }))
+
+    expect(await screen.findByText('23°')).toBeTruthy()
+    expect(screen.getByRole('region', { name: '환율' })).toBe(exchangeCard)
+    expect(within(exchangeCard).getByText('1 USD = 1341.49 KRW')).toBeTruthy()
   })
 })

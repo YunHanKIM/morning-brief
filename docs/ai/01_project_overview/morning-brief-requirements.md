@@ -61,7 +61,7 @@
 | U3 | 위젯 병렬 실행 + 부분 실패 집계 (REQ-F-007) | |
 | U2b | 도시 검색·검증·도시별 날씨 조회 로직 (REQ-F-002): `searchCities`(주요 도시 우선, 지오코딩), `parseCity`, `createWeatherWidget(city)` | 한글 짧은 이름(서울, 부산)은 지오코딩이 부정확해 주요 8곳 좌표 고정. 완료 |
 | U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입. 컴포넌트 테스트 파일에만 `@jest-environment jsdom` 독블록 사용(전역 `node` 유지), `jest-dom` 미도입 |
-| U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저 전용. 매일 아침 자동 브리핑의 대표 도시는 서버 저장소(U10) 이후 연결 |
+| U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저(`document.cookie`)에서 저장하고 서버는 읽을 때마다 `parseCity`로 검증. 매일 아침 자동 브리핑의 대표 도시는 서버 저장소(U10) 이후 연결. 완료 |
 | U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자(Client Component, 이미 받은 환율에서 즉시 전환. 한 번에 조회: U5c), page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 초기값 연결(`loadDashboardResults`) | U5a·U5b 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
 | U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃 |
 | U7a / U7b | GitHub 활동 — a 로직 / b 카드 | 토큰 선택, rate limit 오류 처리 |
@@ -84,5 +84,5 @@
 | ~~환율 API 최종 선택~~ → Frankfurter 확정 (U5a, 키·결제 없음. 한국수출입은행은 대안으로만 유지) | 완료 |
 | 저장소 (Supabase 또는 Vercel KV) | U10 |
 | 오늘의 한마디 소스 (영어 ZenQuotes 또는 한글 소스) | U8 |
-| ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑의 대표 도시 저장은 U10 이후 | 진행 중 |
+| ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑의 대표 도시 저장은 U10 이후 | U2b·U4b 완료. 자동 브리핑 연결만 U10 이후 |
 | LLM 요약 포함 여부 | MVP 이후 |
