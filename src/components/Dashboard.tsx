@@ -1,6 +1,7 @@
 import { DEFAULT_CURRENCY, type Currency } from '../widgets/exchange/currencies'
 import type { City } from '../widgets/weather/city'
 import { ExchangeCard } from './ExchangeCard'
+import { NewsCard } from './NewsCard'
 import type { DashboardResults } from './toDashboardResults'
 import { WeatherCard } from './WeatherCard'
 
@@ -20,6 +21,7 @@ export function Dashboard({
       <h1 className="text-2xl font-semibold">Morning Brief</h1>
       <WeatherCard result={results.weather} loading={loading} city={city} />
       <ExchangeCard result={results.exchange} loading={loading} selected={currency} />
+      <NewsCard result={results.news} loading={loading} />
     </main>
   )
 }

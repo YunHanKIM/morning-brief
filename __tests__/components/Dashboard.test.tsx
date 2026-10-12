@@ -24,6 +24,21 @@ const exchange = {
   },
 }
 
+const news = {
+  status: 'ok' as const,
+  data: {
+    items: [
+      {
+        id: 1,
+        title: 'Zig 템플릿',
+        score: 134,
+        url: 'https://example.com/zig',
+        discussionUrl: 'https://news.ycombinator.com/item?id=1',
+      },
+    ],
+  },
+}
+
 const statusOf = (name: string) =>
   within(screen.getByRole('region', { name })).getByRole('status').textContent
 
@@ -97,5 +112,29 @@ describe('Dashboard', () => {
     expect(await screen.findByText('23°')).toBeTruthy()
     expect(screen.getByRole('region', { name: '환율' })).toBe(exchangeCard)
     expect(within(exchangeCard).getByText('1 USD = 1341.49 KRW')).toBeTruthy()
+  })
+
+  it('날씨·환율·개발 뉴스 카드를 모두 보여준다', () => {
+    render(<Dashboard city={seoul} results={{ weather, exchange, news }} />)
+    expect(screen.getByRole('region', { name: '날씨' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: '환율' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Zig 템플릿' })).toBeTruthy()
+  })
+
+  it('뉴스가 실패해도 나머지 카드는 렌더된다', () => {
+    render(
+      <Dashboard
+        city={seoul}
+        results={{ weather, exchange, news: { status: 'error', message: 'boom' } }}
+      />,
+    )
+    expect(within(screen.getByRole('region', { name: '개발 뉴스' })).getByRole('alert').textContent).toContain('boom')
+    expect(screen.getByText('18.4°')).toBeTruthy()
+    expect(screen.getByText('1 USD = 1341.49 KRW')).toBeTruthy()
+  })
+
+  it('loading이면 뉴스 카드도 로딩 상태다', () => {
+    render(<Dashboard city={seoul} results={{}} loading />)
+    expect(statusOf('개발 뉴스')).toContain('불러오는 중')
   })
 })

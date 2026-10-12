@@ -17,7 +17,6 @@
 | `CRON_SECRET` | cron 엔드포인트 인증 | 서버 전용 (GitHub Actions secret에도 동일 값) |
 | `TELEGRAM_BOT_TOKEN` | Telegram 전송 | 서버 전용 |
 | `TELEGRAM_CHAT_ID` | 수신 대상 | 서버 전용 |
-| `GITHUB_TOKEN`(선택) | GitHub API rate limit 완화 | 서버 전용 |
 
 ## 소비하는 외부 API
 

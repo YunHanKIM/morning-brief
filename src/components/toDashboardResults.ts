@@ -1,11 +1,13 @@
 import { CURRENCIES } from '../widgets/exchange/currencies'
 import type { ExchangeData } from '../widgets/exchange/normalize'
+import type { NewsData } from '../widgets/news/normalize'
 import type { WidgetResult } from '../widgets/types'
 import type { WeatherData } from '../widgets/weather/normalize'
 
 export interface DashboardResults {
   weather?: WidgetResult<WeatherData>
   exchange?: WidgetResult<ExchangeData>
+  news?: WidgetResult<NewsData>
 }
 
 function isWeatherData(value: unknown): value is WeatherData {
@@ -29,6 +31,33 @@ function isExchangeData(value: unknown): value is ExchangeData {
   return CURRENCIES.every((code) => typeof r[code] === 'number')
 }
 
+function isHttpUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function isNewsData(value: unknown): value is NewsData {
+  if (typeof value !== 'object' || value === null) return false
+  const items = (value as Record<string, unknown>).items
+  if (!Array.isArray(items)) return false
+  return items.every((item) => {
+    if (typeof item !== 'object' || item === null) return false
+    const v = item as Record<string, unknown>
+    return (
+      typeof v.id === 'number' &&
+      typeof v.title === 'string' &&
+      typeof v.score === 'number' &&
+      isHttpUrl(v.url) &&
+      isHttpUrl(v.discussionUrl)
+    )
+  })
+}
+
 // 모양이 틀린 ok 결과는 error로 바꾼다
 function narrow<T>(
   result: WidgetResult<unknown> | undefined,
@@ -45,5 +74,6 @@ export function toDashboardResults(raw: Record<string, WidgetResult<unknown>>): 
   return {
     weather: narrow(raw.weather, isWeatherData, '날씨 데이터 형식이 올바르지 않습니다'),
     exchange: narrow(raw.exchange, isExchangeData, '환율 데이터 형식이 올바르지 않습니다'),
+    news: narrow(raw.news, isNewsData, '뉴스 데이터 형식이 올바르지 않습니다'),
   }
 }

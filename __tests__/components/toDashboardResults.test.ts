@@ -54,4 +54,44 @@ describe('toDashboardResults', () => {
       expect(result.exchange?.status).toBe('error')
     })
   })
+
+  describe('news', () => {
+    const item = {
+      id: 1,
+      title: 'T',
+      score: 3,
+      url: 'https://example.com/a',
+      discussionUrl: 'https://news.ycombinator.com/item?id=1',
+    }
+    const news = { items: [item] }
+
+    it('올바른 뉴스 ok 결과는 그대로 통과시킨다', () => {
+      expect(toDashboardResults({ news: { status: 'ok', data: news } })).toEqual({
+        news: { status: 'ok', data: news },
+      })
+    })
+
+    it('error 결과는 그대로 통과시킨다', () => {
+      expect(toDashboardResults({ news: { status: 'error', message: 'boom' } }).news).toEqual({
+        status: 'error',
+        message: 'boom',
+      })
+    })
+
+    it('글이 0건이어도 올바른 결과다', () => {
+      expect(toDashboardResults({ news: { status: 'ok', data: { items: [] } } }).news?.status).toBe('ok')
+    })
+
+    it.each([
+      ['items 누락', {}],
+      ['items가 배열이 아님', { items: 'x' }],
+      ['제목이 숫자', { items: [{ ...item, title: 1 }] }],
+      ['점수가 문자열', { items: [{ ...item, score: '3' }] }],
+      ['javascript: 링크', { items: [{ ...item, url: 'javascript:alert(1)' }] }],
+      ['http가 아닌 토론 주소', { items: [{ ...item, discussionUrl: 'data:text/html,x' }] }],
+      ['항목이 null', { items: [null] }],
+    ])('ok인데 데이터 모양이 틀리면 error로 바꾼다: %s', (_name, bad) => {
+      expect(toDashboardResults({ news: { status: 'ok', data: bad } }).news?.status).toBe('error')
+    })
+  })
 })

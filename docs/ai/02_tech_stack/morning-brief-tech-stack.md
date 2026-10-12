@@ -36,7 +36,6 @@
 | 날씨 | Open-Meteo | 불필요 |
 | 환율 | Frankfurter (ECB 기준, 확정) / 한국수출입은행(대안) | 전자 불필요, 후자 필요 |
 | 개발 뉴스 | Hacker News API, 기술 블로그 RSS | 불필요 |
-| GitHub 활동 | GitHub REST API | 토큰(선택, rate limit 완화) |
 | 오늘의 한마디 | 무료 공개 API (미정) | 불필요 |
 | AI 요약(후순위) | Claude API | 필요 |
 

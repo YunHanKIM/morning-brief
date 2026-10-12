@@ -13,6 +13,14 @@ const rates = Object.fromEntries(CURRENCIES.map((code, i) => [code, i + 1]))
 function mockFetch(exchangeStatus = 200) {
   return jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(String(input))
+    if (url.hostname === 'hacker-news.firebaseio.com') {
+      if (url.pathname.endsWith('/topstories.json')) return new Response(JSON.stringify([11, 12]), { status: 200 })
+      const id = Number(url.pathname.match(/item\/(\d+)\.json/)?.[1])
+      return new Response(
+        JSON.stringify({ id, type: 'story', title: `글 ${id}`, score: 5, url: `https://example.com/${id}` }),
+        { status: 200 },
+      )
+    }
     if (url.hostname === 'api.frankfurter.dev') {
       if (exchangeStatus !== 200) return new Response('fail', { status: exchangeStatus })
       return new Response(
@@ -35,12 +43,19 @@ describe('loadDashboardResults', () => {
     const results = await loadDashboardResults(busan)
 
     const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
-    expect(hosts.sort()).toEqual(['api.frankfurter.dev', 'api.open-meteo.com'])
+    expect(hosts.sort()).toEqual([
+      'api.frankfurter.dev',
+      'api.open-meteo.com',
+      'hacker-news.firebaseio.com',
+      'hacker-news.firebaseio.com',
+      'hacker-news.firebaseio.com',
+    ])
     expect(results.exchange).toEqual({
       status: 'ok',
       data: { base: 'USD', date: '2026-10-09', rates },
     })
     expect(results.weather?.status).toBe('ok')
+    expect(results.news?.status).toBe('ok')
   })
 
   it('날씨는 받은 도시의 좌표로 조회한다', async () => {
@@ -61,7 +76,8 @@ describe('loadDashboardResults', () => {
     const results = await loadDashboardResults(null)
 
     const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
-    expect(hosts).toEqual(['api.frankfurter.dev'])
+    expect(hosts.filter((host) => host === 'api.open-meteo.com')).toEqual([])
+    expect(hosts).toContain('api.frankfurter.dev')
     expect(results.weather).toBeUndefined()
     expect(results.exchange?.status).toBe('ok')
   })
@@ -73,5 +89,22 @@ describe('loadDashboardResults', () => {
 
     expect(results.exchange?.status).toBe('error')
     expect(results.weather?.status).toBe('ok')
+  })
+
+  it('뉴스가 실패해도 날씨와 환율은 정상으로 반환한다', async () => {
+    jest.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = new URL(String(input))
+      if (url.hostname === 'hacker-news.firebaseio.com') return new Response('fail', { status: 500 })
+      if (url.hostname === 'api.frankfurter.dev') {
+        return new Response(JSON.stringify({ amount: 1, base: 'USD', date: '2026-10-09', rates }), { status: 200 })
+      }
+      return new Response(JSON.stringify(weatherBody), { status: 200 })
+    })
+
+    const results = await loadDashboardResults(busan)
+
+    expect(results.news?.status).toBe('error')
+    expect(results.weather?.status).toBe('ok')
+    expect(results.exchange?.status).toBe('ok')
   })
 })

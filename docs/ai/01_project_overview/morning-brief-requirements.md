@@ -1,6 +1,6 @@
 # Morning Brief — 요구사항 정의 및 구현 단위
 
-> 2026-10-11 작성. 범위: 위젯 5개 전부 MVP. 개발은 아래 "구현 단위"를 한 번에 하나씩, TDD(Jest)로 진행하고
+> 2026-10-11 작성. 범위: 위젯 4개(날씨, 환율, 개발 뉴스, 오늘의 한마디)가 MVP. GitHub 활동 위젯은 2026-10-13에 MVP에서 제외했다(아래 3절). 개발은 아래 "구현 단위"를 한 번에 하나씩, TDD(Jest)로 진행하고
 > 코드를 작성한 단위는 codex-critic 리뷰를 받는다. 상태는 구현 시 갱신한다.
 > 형식은 상위 저장소 `요구사항_TASK_전환_Format.md`의 매핑(목표·완료 조건·제약)과 호환된다.
 
@@ -12,7 +12,7 @@
 | REQ-F-002 | 날씨 위젯 | 사용자가 고른 도시의 현재 기온·날씨 상태·오늘 최고/최저를 정규화해 반환. 도시는 처음 한 번 고르면 바꾸기 전까지 유지(첫 방문은 선택 안내). 이름으로 자유 검색하고, 한국 주요 8곳은 좌표 고정 목록으로도 고른다 | 키 없는 API만 사용. 검색어·저장된 도시는 신뢰하지 않고 검증 | U2, U2b, U4, U4b |
 | REQ-F-003 | 환율 위젯 | USD 기준 환율과 기준 일자를 반환. 기본은 USD/KRW이며 사용자가 받는 통화를 고를 수 있다(KRW, JPY, EUR, CNY, GBP, AUD, CAD, CHF). 8개 통화의 환율을 한 번에 조회해 두고, 통화를 바꾸면 조회 없이 화면에서 즉시 전환한다(페이지 전체·다른 위젯 재조회 없음). 주소 `?to=`도 갱신해 새로고침해도 유지한다. 목록 밖 값은 KRW로 되돌린다 | 키 없는 API 우선. 제공 일자(마지막 영업일) 표시 | U5 |
 | REQ-F-004 | 개발 뉴스 위젯 | Hacker News 상위 N건(제목·링크·점수) 반환 | 외부 문자열은 텍스트로만 렌더 | U6 |
-| REQ-F-005 | GitHub 활동 위젯 | 지정 사용자의 최근 공개 활동 요약(커밋·PR 수 등) 반환 | 토큰은 선택. 미설정 시 rate limit 초과를 오류로 처리 | U7 |
+| REQ-F-005 | ~~GitHub 활동 위젯~~ (MVP 제외, 3절 후순위) | 지정 사용자의 최근 공개 활동 요약(커밋·PR 수 등) 반환 | 토큰은 선택. 미설정 시 rate limit 초과를 오류로 처리 | 후순위 |
 | REQ-F-006 | 오늘의 한마디 위젯 | 문구와 출처(작가)를 반환 | 출처 표기 의무 준수 | U8 |
 | REQ-F-007 | 부분 실패 허용 | 위젯 하나가 실패해도 나머지 결과는 정상 반환되고 실패 위젯은 `error`로 표시 | `Promise.allSettled` 사용 | U3 |
 | REQ-F-008 | 브리핑 생성 API | (U9) `POST /api/cron/brief`가 위젯을 실행해 결과를 반환하고, 토큰이 없거나 틀리면 `401`. (U12) 저장·Telegram 전송을 연결하고 응답에 `{date, widgets, telegram}` 상태를 포함 | 토큰 상수 시간 비교. 시크릿은 서버 환경변수만 | U9, U12 |
@@ -36,7 +36,7 @@
 
 ## 3. 후순위 (MVP 이후) / 제외
 
-- 후순위: LLM 요약(Claude API), 위젯 설정 UI, 이력 차트, 이메일 알림
+- 후순위: LLM 요약(Claude API), 위젯 설정 UI, 이력 차트, 이메일 알림, GitHub 활동 위젯(공개 활동 요약, 필요 시 `GITHUB_TOKEN`)
 - 제외: 다중 사용자 인증, 로그인이 필요한 크롤링(Playwright), 유료 API
 
 ## 4. 외부 API 후보 (2026-10-11 응답 확인)
@@ -46,7 +46,6 @@
 | 날씨 | Open-Meteo `api.open-meteo.com/v1/forecast` | 불필요 | 200 | 비상업적 이용 무료. 약관 확인 |
 | 환율 | Frankfurter `api.frankfurter.dev/v1/latest?base=USD&symbols=KRW` | 불필요 | 200 | ECB 기준 영업일 단위 환율. 대안: `open.er-api.com` (출처 표기 필요), 한국수출입은행(키 필요) |
 | 개발 뉴스 | Hacker News `hacker-news.firebaseio.com/v0/topstories.json` + `item/{id}.json` | 불필요 | 200 | 항목별 호출이 필요해 상위 N건만, 병렬+타임아웃 |
-| GitHub 활동 | GitHub REST `api.github.com/users/{user}/events/public` | 선택 | 200 | 비인증은 시간당 요청 제한이 낮고 서버리스 공유 IP에서 더 빨리 소진될 수 있어 `GITHUB_TOKEN` 권장 |
 | 오늘의 한마디 | ZenQuotes `zenquotes.io/api/today` | 불필요 | 200 | 영어 문구. 출처 표기 의무와 호출 제한이 있음. 한글 소스는 U8에서 재검토 |
 
 한도와 약관은 자주 바뀐다. 각 위젯 단위를 시작할 때 공식 문서로 다시 확인하고 이 표를 갱신한다.
@@ -63,8 +62,8 @@
 | U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입. 컴포넌트 테스트 파일에만 `@jest-environment jsdom` 독블록 사용(전역 `node` 유지), `jest-dom` 미도입 |
 | U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저(`document.cookie`)에서 저장하고 서버는 읽을 때마다 `parseCity`로 검증. 매일 아침 자동 브리핑의 대표 도시는 서버 저장소(U10) 이후 연결. 완료 |
 | U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자(Client Component, 이미 받은 환율에서 즉시 전환. 한 번에 조회: U5c), page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 초기값 연결(`loadDashboardResults`) | U5a·U5b 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
-| U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃. U6a 완료: HN 상위 10건 조회 → 걸러낸 뒤 5건, 링크는 http(s)만(아니면 토론 주소) |
-| U7a / U7b | GitHub 활동 — a 로직 / b 카드 | 토큰 선택, rate limit 오류 처리 |
+| U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃. U6a·U6b 완료: HN 상위 10건 조회 → 걸러낸 뒤 5건, 링크는 http(s)만(아니면 토론 주소), 카드는 제목을 텍스트로만 렌더하고 링크는 새 탭 + noopener noreferrer |
+| ~~U7a / U7b~~ | ~~GitHub 활동~~ — MVP 제외(번호는 유지). 내가 한 일은 내가 이미 알아 아침 브리핑 가치가 낮고, 사용자 이름 입력 UI와 rate limit·토큰 부담이 크다. 알림(리뷰 요청 등)은 비공개 정보라 공개 데모(REQ-F-013)에 부적합 | 후순위 |
 | U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | 출처 표기, 소스 확정 |
 | U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트 |
 | U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | 저장소 확정 (Supabase / Vercel KV) |
