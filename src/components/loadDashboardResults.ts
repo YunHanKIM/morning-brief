@@ -1,9 +1,10 @@
 import { exchangeWidget } from '../widgets/exchange'
 import { runWidgets } from '../widgets/runWidgets'
-import { weatherWidget } from '../widgets/weather'
+import type { City } from '../widgets/weather/city'
+import { createWeatherWidget } from '../widgets/weather'
 import { toDashboardResults } from './toDashboardResults'
 
-export async function loadDashboardResults() {
-  const results = await runWidgets([weatherWidget, exchangeWidget])
+export async function loadDashboardResults(city: City) {
+  const results = await runWidgets([createWeatherWidget(city), exchangeWidget])
   return toDashboardResults(results)
 }

@@ -1,5 +1,8 @@
 import { loadDashboardResults } from '../../src/components/loadDashboardResults'
 import { CURRENCIES } from '../../src/widgets/exchange/currencies'
+import { POPULAR_CITIES } from '../../src/widgets/weather/city'
+
+const busan = POPULAR_CITIES[1]
 
 const weatherBody = {
   current: { temperature_2m: 19.6, weather_code: 1 },
@@ -29,7 +32,7 @@ describe('loadDashboardResults', () => {
   it('날씨와 모든 통화의 환율을 각각 한 번씩만 조회해 반환한다', async () => {
     const spy = mockFetch()
 
-    const results = await loadDashboardResults()
+    const results = await loadDashboardResults(busan)
 
     const hosts = spy.mock.calls.map(([input]) => new URL(String(input)).hostname)
     expect(hosts.sort()).toEqual(['api.frankfurter.dev', 'api.open-meteo.com'])
@@ -40,10 +43,22 @@ describe('loadDashboardResults', () => {
     expect(results.weather?.status).toBe('ok')
   })
 
+  it('날씨는 받은 도시의 좌표로 조회한다', async () => {
+    const spy = mockFetch()
+
+    await loadDashboardResults(busan)
+
+    const weatherUrl = spy.mock.calls
+      .map(([input]) => new URL(String(input)))
+      .find((url) => url.hostname === 'api.open-meteo.com')
+    expect(weatherUrl?.searchParams.get('latitude')).toBe(String(busan.latitude))
+    expect(weatherUrl?.searchParams.get('longitude')).toBe(String(busan.longitude))
+  })
+
   it('환율이 실패해도 날씨는 정상으로 반환한다', async () => {
     mockFetch(503)
 
-    const results = await loadDashboardResults()
+    const results = await loadDashboardResults(busan)
 
     expect(results.exchange?.status).toBe('error')
     expect(results.weather?.status).toBe('ok')
