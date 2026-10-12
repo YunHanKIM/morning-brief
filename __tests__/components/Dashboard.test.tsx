@@ -1,9 +1,6 @@
 /** @jest-environment jsdom */
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { Dashboard } from '../../src/components/Dashboard'
-import { loadExchange } from '../../src/components/exchangeAction'
-
-jest.mock('../../src/components/exchangeAction', () => ({ loadExchange: jest.fn() }))
 
 const weather = {
   status: 'ok' as const,
@@ -11,7 +8,11 @@ const weather = {
 }
 const exchange = {
   status: 'ok' as const,
-  data: { base: 'USD' as const, quote: 'KRW' as const, rate: 1341.49, date: '2026-10-09' },
+  data: {
+    base: 'USD' as const,
+    date: '2026-10-09',
+    rates: { KRW: 1341.49, JPY: 158.25, EUR: 0.89238, CNY: 6.6921, GBP: 0.75641, AUD: 1.4324, CAD: 1.4226, CHF: 0.83107 },
+  },
 }
 
 const statusOf = (name: string) =>
@@ -50,19 +51,20 @@ describe('Dashboard', () => {
     expect((screen.getByLabelText('받는 통화') as HTMLSelectElement).value).toBe('EUR')
   })
 
-  it('통화를 바꿔도 환율만 갱신되고 날씨 카드는 그대로다', async () => {
-    jest.mocked(loadExchange).mockResolvedValue({
-      status: 'ok',
-      data: { base: 'USD', quote: 'JPY', rate: 158.25, date: '2026-10-09' },
-    })
+  it('통화를 바꿔도 환율만 바뀌고 날씨 카드는 그대로이며 추가 조회가 없다', () => {
+    // jsdom에는 fetch가 없어 가짜를 심고, 호출되지 않는지 본다
+    const originalFetch = globalThis.fetch
+    const fetchMock = jest.fn()
+    globalThis.fetch = fetchMock
     render(<Dashboard results={{ weather, exchange }} />)
     const weatherCard = screen.getByRole('region', { name: '날씨' })
 
     fireEvent.change(screen.getByLabelText('받는 통화'), { target: { value: 'JPY' } })
 
-    expect(await screen.findByText('1 USD = 158.25 JPY')).toBeTruthy()
-    expect(loadExchange).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('1 USD = 158.25 JPY')).toBeTruthy()
     expect(screen.getByRole('region', { name: '날씨' })).toBe(weatherCard)
     expect(within(weatherCard).getByText('18.4°')).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+    globalThis.fetch = originalFetch
   })
 })

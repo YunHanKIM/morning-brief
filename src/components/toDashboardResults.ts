@@ -22,12 +22,11 @@ function isWeatherData(value: unknown): value is WeatherData {
 function isExchangeData(value: unknown): value is ExchangeData {
   if (typeof value !== 'object' || value === null) return false
   const v = value as Record<string, unknown>
-  return (
-    v.base === 'USD' &&
-    CURRENCIES.some((code) => code === v.quote) &&
-    typeof v.rate === 'number' &&
-    typeof v.date === 'string'
-  )
+  if (v.base !== 'USD' || typeof v.date !== 'string') return false
+  const rates = v.rates
+  if (typeof rates !== 'object' || rates === null) return false
+  const r = rates as Record<string, unknown>
+  return CURRENCIES.every((code) => typeof r[code] === 'number')
 }
 
 // 모양이 틀린 ok 결과는 error로 바꾼다

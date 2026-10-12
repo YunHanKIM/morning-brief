@@ -8,7 +8,7 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 // searchParams와 fetch는 요청 때 실행된다. 기다리는 동안은 로딩 상태 대시보드를 먼저 보낸다
 async function LiveDashboard({ searchParams }: { searchParams: SearchParams }) {
   const { to } = await searchParams
-  const results = await loadDashboardResults({ to })
+  const results = await loadDashboardResults()
   return <Dashboard results={results} currency={parseCurrency(to)} />
 }
 

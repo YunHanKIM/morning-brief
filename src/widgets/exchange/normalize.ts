@@ -3,11 +3,10 @@ import type { ExchangeRaw } from './fetch'
 
 export interface ExchangeData {
   base: 'USD'
-  quote: Currency
-  rate: number
   date: string
+  rates: Record<Currency, number>
 }
 
-export function normalizeExchange(raw: ExchangeRaw, to: Currency): ExchangeData {
-  return { base: raw.base, quote: to, rate: raw.rates[to], date: raw.date }
+export function normalizeExchange(raw: ExchangeRaw): ExchangeData {
+  return { base: raw.base, date: raw.date, rates: raw.rates }
 }
