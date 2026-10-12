@@ -64,7 +64,7 @@
 | U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자(Client Component, 이미 받은 환율에서 즉시 전환. 한 번에 조회: U5c), page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 초기값 연결(`loadDashboardResults`) | U5a·U5b 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
 | U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃. U6a·U6b 완료: HN 상위 10건 조회 → 걸러낸 뒤 5건, 링크는 http(s)만(아니면 토론 주소), 카드는 제목을 텍스트로만 렌더하고 링크는 새 탭 + noopener noreferrer |
 | ~~U7a / U7b~~ | ~~GitHub 활동~~ — MVP 제외(번호는 유지). 내가 한 일은 내가 이미 알아 아침 브리핑 가치가 낮고, 사용자 이름 입력 UI와 rate limit·토큰 부담이 크다. 알림(리뷰 요청 등)은 비공개 정보라 공개 데모(REQ-F-013)에 부적합 | 후순위 |
-| U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | 출처 표기, 소스 확정 |
+| U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | U8a 완료: 소스 확정 = ZenQuotes(영어, `/api/today`) + MyMemory 한글 자동 번역(무료·키 없음, 하루 5,000자). 번역 실패 시 영어만(null). 결과는 `use cache`로 저장(명언 hours, 번역 성공 days, 실패 minutes). 카드(U8b)는 출처 표기(ZenQuotes·MyMemory)와 "자동 번역" 표시 필수 |
 | U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트 |
 | U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | 저장소 확정 (Supabase / Vercel KV) |
 | U11 | Telegram 전송 (단독 함수, fetch mock) | |
@@ -82,6 +82,6 @@
 |---|---|
 | ~~환율 API 최종 선택~~ → Frankfurter 확정 (U5a, 키·결제 없음. 한국수출입은행은 대안으로만 유지) | 완료 |
 | 저장소 (Supabase 또는 Vercel KV) | U10 |
-| 오늘의 한마디 소스 (영어 ZenQuotes 또는 한글 소스) | U8 |
+| ~~오늘의 한마디 소스~~ → ZenQuotes(영어) + MyMemory 한글 자동 번역으로 확정 (U8a). 번역 품질 향상(AI 번역)은 후순위 | 완료 |
 | ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑의 대표 도시 저장은 U10 이후 | U2b·U4b 완료. 자동 브리핑 연결만 U10 이후 |
 | LLM 요약 포함 여부 | MVP 이후 |
