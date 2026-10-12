@@ -12,8 +12,9 @@
 | 테스트 | Jest 30 (`next/jest`, `testEnvironment: node`), `@types/jest`, `ts-node` |
 | 데이터 검증 | zod 4.6.5 (외부 API 응답, U2에서 도입) |
 
-- 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트가 필요해지면 `jsdom` 환경,
-  React Testing Library, `@testing-library/jest-dom`을 그때 추가한다.
+- 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트는 파일 맨 위에 `@jest-environment jsdom`
+  독블록을 붙여 `jest-environment-jsdom` + React Testing Library로 실행한다(전역은 `node` 유지: jsdom에 `fetch`가 없어
+  위젯 `fetch` 테스트가 깨지기 때문). `@testing-library/jest-dom`은 필요해질 때 추가한다.
 - `@/*` import alias를 테스트에서 쓰려면 그때 `jest.config.ts`에 `moduleNameMapper`를 추가한다.
 
 ## 계획 (아직 설치하지 않음 — 필요한 단위에서 추가)
@@ -33,7 +34,7 @@
 | 위젯 | API | 키 |
 |---|---|---|
 | 날씨 | Open-Meteo | 불필요 |
-| 환율 | 키 없는 무료 API (미정) / 한국수출입은행 | 후자는 필요 |
+| 환율 | Frankfurter (ECB 기준, 확정) / 한국수출입은행(대안) | 전자 불필요, 후자 필요 |
 | 개발 뉴스 | Hacker News API, 기술 블로그 RSS | 불필요 |
 | GitHub 활동 | GitHub REST API | 토큰(선택, rate limit 완화) |
 | 오늘의 한마디 | 무료 공개 API (미정) | 불필요 |

@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | REQ-F-001 | 위젯 인터페이스 | 위젯은 `fetch → normalize`를 거쳐 `{status: "ok", data}` 또는 `{status: "error", message}` 형태의 결과를 낸다 | 서버 전용 코드. 외부 호출에 타임아웃 | U1 |
 | REQ-F-002 | 날씨 위젯 | 서울 기준 현재 기온·날씨 상태·오늘 최고/최저를 정규화해 반환 | 키 없는 API만 사용 | U2, U4 |
-| REQ-F-003 | 환율 위젯 | USD/KRW(필요 시 JPY 등) 환율과 기준 일자를 반환 | 키 없는 API 우선. 제공 일자 표시 | U5 |
+| REQ-F-003 | 환율 위젯 | USD 기준 환율과 기준 일자를 반환. 기본은 USD/KRW이며 사용자가 받는 통화를 고를 수 있다(KRW, JPY, EUR, CNY, GBP, AUD, CAD, CHF). 선택은 URL `?to=`로 하고 목록 밖 값은 KRW로 되돌린다 | 키 없는 API 우선. 제공 일자(마지막 영업일) 표시 | U5 |
 | REQ-F-004 | 개발 뉴스 위젯 | Hacker News 상위 N건(제목·링크·점수) 반환 | 외부 문자열은 텍스트로만 렌더 | U6 |
 | REQ-F-005 | GitHub 활동 위젯 | 지정 사용자의 최근 공개 활동 요약(커밋·PR 수 등) 반환 | 토큰은 선택. 미설정 시 rate limit 초과를 오류로 처리 | U7 |
 | REQ-F-006 | 오늘의 한마디 위젯 | 문구와 출처(작가)를 반환 | 출처 표기 의무 준수 | U8 |
@@ -59,8 +59,8 @@
 | U1 | 위젯 결과 타입 + 인터페이스 (REQ-F-001) | 순수 TS |
 | U2 | 날씨 `fetch` + `normalize` (REQ-F-002) | `fetch` mock 테스트 |
 | U3 | 위젯 병렬 실행 + 부분 실패 집계 (REQ-F-007) | |
-| U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입 |
-| U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트 | 시작 시 API 재확인 |
+| U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입. 컴포넌트 테스트 파일에만 `@jest-environment jsdom` 독블록 사용(전역 `node` 유지), `jest-dom` 미도입 |
+| U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자, page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 연결(통합 테스트 포함) | U5a 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
 | U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃 |
 | U7a / U7b | GitHub 활동 — a 로직 / b 카드 | 토큰 선택, rate limit 오류 처리 |
 | U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | 출처 표기, 소스 확정 |
@@ -79,7 +79,7 @@
 
 | 항목 | 결정 시점 |
 |---|---|
-| 환율 API 최종 선택 (Frankfurter 기본, 한국수출입은행 대안) | U5 |
+| ~~환율 API 최종 선택~~ → Frankfurter 확정 (U5a, 키·결제 없음. 한국수출입은행은 대안으로만 유지) | 완료 |
 | 저장소 (Supabase 또는 Vercel KV) | U10 |
 | 오늘의 한마디 소스 (영어 ZenQuotes 또는 한글 소스) | U8 |
 | 날씨 지역을 서울 고정으로 둘지 설정으로 뺄지 | U2 (기본은 서울 고정) |

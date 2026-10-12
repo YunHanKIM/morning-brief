@@ -10,7 +10,7 @@ describe('fetchExchange', () => {
     jest.restoreAllMocks()
   })
 
-  it('Frankfurter에 USD→KRW를 요청하고 검증된 응답을 반환한다', async () => {
+  it('인자가 없으면 Frankfurter에 USD→KRW를 요청하고 검증된 응답을 반환한다', async () => {
     const spy = jest.spyOn(globalThis, 'fetch').mockResolvedValue(okResponse(validBody))
 
     const raw = await fetchExchange()
@@ -21,6 +21,24 @@ describe('fetchExchange', () => {
     expect(url.searchParams.get('symbols')).toBe('KRW')
     expect(raw.rates.KRW).toBe(1341.49)
     expect(raw.date).toBe('2026-10-09')
+  })
+
+  it('받은 통화로 요청한다', async () => {
+    const spy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(okResponse({ ...validBody, rates: { JPY: 158.25 } }))
+
+    const raw = await fetchExchange('JPY')
+
+    const url = new URL(String(spy.mock.calls[0][0]))
+    expect(url.searchParams.get('symbols')).toBe('JPY')
+    expect(raw.rates.JPY).toBe(158.25)
+  })
+
+  it('요청한 통화가 응답에 없으면 예외를 던진다', async () => {
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue(okResponse(validBody))
+
+    await expect(fetchExchange('JPY')).rejects.toThrow()
   })
 
   it('5초 타임아웃 신호(AbortSignal)를 함께 전달한다', async () => {
