@@ -1,9 +1,12 @@
-import { createMemoryStore } from './memoryStore'
+import { createMemoryStore, type MemoryStore } from './memoryStore'
 import type { SnapshotStore } from './snapshotStore'
 import { createUpstashStore } from './upstashStore'
 
-// SNAPSHOT_STORE=memory로 명시했을 때만 쓰는 개발용 저장소(서버를 다시 켜면 사라진다)
-export const sharedMemoryStore = createMemoryStore()
+// SNAPSHOT_STORE=memory로 명시했을 때만 쓰는 개발용 저장소(서버를 다시 켜면 사라진다).
+// Next는 경로(API·페이지)마다 모듈을 따로 번들해서 모듈 변수만으로는 서로 다른 저장소가 생긴다.
+// 그러면 API가 저장한 브리핑을 화면이 못 보므로 프로세스 전역(globalThis)에 하나만 둔다
+const globalForStore = globalThis as typeof globalThis & { __morningBriefMemoryStore?: MemoryStore }
+export const sharedMemoryStore = (globalForStore.__morningBriefMemoryStore ??= createMemoryStore())
 
 const clean = (value: string | undefined) => value?.trim() || undefined
 

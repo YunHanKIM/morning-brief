@@ -40,6 +40,18 @@ describe('getSnapshotStore', () => {
     expect(await getSnapshotStore()?.get('2026-10-13')).toEqual(makeBrief())
   })
 
+  it('모듈이 여러 번 불러와져도(Next는 경로별로 따로 번들한다) 같은 메모리 저장소를 쓴다', async () => {
+    let other: typeof sharedMemoryStore | undefined
+    await jest.isolateModulesAsync(async () => {
+      other = (await import('../../src/storage/getSnapshotStore')).sharedMemoryStore
+    })
+
+    expect(other).toBe(sharedMemoryStore)
+    sharedMemoryStore.clear()
+    await sharedMemoryStore.save(makeBrief())
+    expect(await other?.get('2026-10-13')).toEqual(makeBrief())
+  })
+
   it('SNAPSHOT_STORE의 다른 값은 무시한다', () => {
     process.env.SNAPSHOT_STORE = 'yes'
     expect(getSnapshotStore()).toBeNull()

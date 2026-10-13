@@ -19,7 +19,10 @@ export function ExchangeCard({
   // 모든 통화의 환율을 이미 받아 두었으므로 서버에 다시 묻지 않고 화면에서 고른다
   function choose(code: Currency) {
     setSelected(code)
-    window.history.replaceState(null, '', `?to=${code}`)
+    // 주소의 다른 쿼리(예: ?date=)는 그대로 두고 to만 바꾼다
+    const url = new URL(window.location.href)
+    url.searchParams.set('to', code)
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
   }
 
   return (

@@ -167,4 +167,53 @@ describe('Dashboard', () => {
     render(<Dashboard city={seoul} results={{}} loading />)
     expect(statusOf('오늘의 한마디')).toContain('불러오는 중')
   })
+
+  describe('읽기 전용·배너·추가 영역', () => {
+    it('readOnly면 날씨 카드에서 도시를 바꿀 수 없지만 환율 통화 전환은 된다', () => {
+      render(<Dashboard city={seoul} results={{ weather, exchange }} readOnly />)
+
+      expect(screen.queryByRole('button', { name: '도시 바꾸기' })).toBeNull()
+      fireEvent.change(screen.getByLabelText('받는 통화'), { target: { value: 'JPY' } })
+      expect(screen.getByText('1 USD = 158.25 JPY')).toBeTruthy()
+    })
+
+    it('banner는 제목 아래, children은 카드들 아래에 그린다', () => {
+      render(
+        <Dashboard city={seoul} results={{ weather, exchange }} banner={<p>배너 문구</p>}>
+          <p>추가 영역</p>
+        </Dashboard>,
+      )
+
+      const html = document.body.innerHTML
+      const order = ['Morning Brief', '배너 문구', '날씨', '환율', '추가 영역'].map((text) => html.indexOf(text))
+      expect(order.every((index) => index >= 0)).toBe(true)
+      expect([...order].sort((a, b) => a - b)).toEqual(order)
+    })
+
+    it('banner와 children이 없어도 그대로 렌더된다', () => {
+      render(<Dashboard city={seoul} results={{ weather, exchange }} />)
+
+      expect(screen.getByRole('heading', { level: 1, name: 'Morning Brief' })).toBeTruthy()
+    })
+  })
+
+  describe('화면 전환 시 이전 상태 (Link로 이동하면 같은 자리의 카드가 재사용된다)', () => {
+    const other = { status: 'ok' as const, data: { temperature: 3, condition: '눈', high: 5, low: -2 } }
+
+    it('key가 같으면 카드가 이전 날씨를 들고 남는다 (그래서 key가 필요하다)', () => {
+      const { rerender } = render(<Dashboard key="same" city={seoul} results={{ weather }} readOnly />)
+      rerender(<Dashboard key="same" city={seoul} results={{ weather: other }} readOnly />)
+
+      expect(screen.getByText('18.4°')).toBeTruthy()
+      expect(screen.queryByText('3°')).toBeNull()
+    })
+
+    it('key가 바뀌면 카드가 새로 만들어져 새 날씨를 보여준다', () => {
+      const { rerender } = render(<Dashboard key="snapshot:2026-10-12" city={seoul} results={{ weather }} readOnly />)
+      rerender(<Dashboard key="snapshot:2026-10-13" city={seoul} results={{ weather: other }} readOnly />)
+
+      expect(screen.getByText('3°')).toBeTruthy()
+      expect(screen.queryByText('18.4°')).toBeNull()
+    })
+  })
 })

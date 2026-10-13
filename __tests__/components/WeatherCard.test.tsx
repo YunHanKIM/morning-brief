@@ -96,6 +96,32 @@ describe('WeatherCard', () => {
     })
   })
 
+  describe('읽기 전용 (저장된 지난 브리핑)', () => {
+    it('저장된 도시와 날씨를 보여주되 도시 바꾸기는 없다', () => {
+      render(<WeatherCard city={seoul} result={ok(seoulData)} readOnly />)
+
+      expect(screen.getByText('서울 · 서울특별시')).toBeTruthy()
+      expect(screen.getByText('18.4°')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: '도시 바꾸기' })).toBeNull()
+      expect(screen.queryByLabelText('도시 검색')).toBeNull()
+    })
+
+    it('도시가 없어도 선택 안내·선택 창을 열지 않고 정보 없음으로 보여준다', () => {
+      render(<WeatherCard city={null} readOnly />)
+
+      expect(screen.queryByText('도시를 선택하세요')).toBeNull()
+      expect(screen.queryByLabelText('도시 검색')).toBeNull()
+      expect(screen.getByRole('status').textContent).toContain('날씨 정보가 없습니다')
+    })
+
+    it('오류 결과도 그대로 알린다', () => {
+      render(<WeatherCard city={seoul} result={{ status: 'error', message: 'boom' }} readOnly />)
+
+      expect(screen.getByRole('alert').textContent).toContain('boom')
+      expect(screen.queryByRole('button', { name: '도시 바꾸기' })).toBeNull()
+    })
+  })
+
   describe('도시 바꾸기', () => {
     it('버튼이 선택 창의 펼침 상태를 스크린리더에 알린다 (aria-expanded, aria-controls)', () => {
       render(<WeatherCard city={seoul} result={ok(seoulData)} />)

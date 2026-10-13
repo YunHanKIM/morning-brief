@@ -127,6 +127,28 @@ describe('ExchangeCard', () => {
       expect(new URLSearchParams(window.location.search).get('to')).toBe('JPY')
     })
 
+    it('주소의 다른 쿼리(예: ?date=)는 지우지 않고 to만 바꾼다', () => {
+      window.history.replaceState(null, '', '/?date=2026-10-12&x=1')
+      render(<ExchangeCard selected="KRW" result={ok} />)
+
+      choose('JPY')
+
+      const params = new URLSearchParams(window.location.search)
+      expect(params.get('to')).toBe('JPY')
+      expect(params.get('date')).toBe('2026-10-12')
+      expect(params.get('x')).toBe('1')
+      expect(window.location.pathname).toBe('/')
+    })
+
+    it('여러 번 바꿔도 to는 하나만 남는다', () => {
+      render(<ExchangeCard selected="KRW" result={ok} />)
+
+      choose('JPY')
+      choose('EUR')
+
+      expect(new URLSearchParams(window.location.search).getAll('to')).toEqual(['EUR'])
+    })
+
     it('오류 상태에서 바꿔도 오류가 유지된다', () => {
       render(<ExchangeCard selected="KRW" result={{ status: 'error', message: 'boom' }} />)
 

@@ -12,14 +12,17 @@ export function WeatherCard({
   result: initialResult,
   loading = false,
   city: initialCity = null,
+  readOnly = false,
 }: {
   result?: WidgetResult<WeatherData>
   loading?: boolean
   city?: City | null
+  // 저장된 지난 브리핑을 볼 때: 도시를 바꿀 수 없다
+  readOnly?: boolean
 }) {
   const [city, setCity] = useState(initialCity)
   const [result, setResult] = useState(initialResult)
-  const [choosing, setChoosing] = useState(initialCity === null && !loading)
+  const [choosing, setChoosing] = useState(initialCity === null && !loading && !readOnly)
   const [pending, setPending] = useState(false)
 
   function select(next: City) {
@@ -55,8 +58,8 @@ export function WeatherCard({
           불러오는 중…
         </p>
       )}
-      {!busy && !city && <p className="mt-2 text-zinc-500">도시를 선택하세요</p>}
-      {!busy && city && !result && (
+      {!busy && !city && !readOnly && <p className="mt-2 text-zinc-500">도시를 선택하세요</p>}
+      {!busy && (city || readOnly) && !result && (
         <p role="status" className="mt-2 text-zinc-500">
           날씨 정보가 없습니다
         </p>
@@ -75,7 +78,7 @@ export function WeatherCard({
           </p>
         </div>
       )}
-      {city && !loading && (
+      {city && !loading && !readOnly && (
         <button
           type="button"
           disabled={pending}
