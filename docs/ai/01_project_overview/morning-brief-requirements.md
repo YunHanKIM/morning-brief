@@ -68,7 +68,7 @@
 | U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트. **완료**: `POST /api/cron/brief`, Bearer 상수 시간 비교, 인증 실패 시 외부 API 무호출, 날씨 도시는 환경변수 `BRIEF_CITY`(서버 저장소 U10 전까지 임시) |
 | U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | **완료**: 저장소 = Upstash Redis(REST, `fetch`만, 의존성 없음). Vercel KV는 종료되어 Upstash로 대체됨. 키 `brief:날짜` + 이력 정렬 집합 `briefs`. 읽은 값은 매번 재검증. **U12 조건**: `save`는 SET 후 ZADD라 원자적이지 않다(멱등) → 저장 실패는 실패로 보고하고 재시도할 것. Upstash 실서비스 호출은 계정 생성 후 U12/U14에서 검증 |
 | U11 | Telegram 전송 (단독 함수, fetch mock) | **완료**: `formatBrief`(평문, 4096자 제한), `sendTelegramMessage`(토큰은 URL 경로라 형식 엄격 검사, 실패는 던지지 않고 reason만 반환·토큰/주소/본문 비노출), `sendBriefToTelegram`(`sent`/`failed`). 가짜 토큰으로 실제 Telegram 호출해 오류 응답 형식(401 `{"ok":false,"error_code":401,"description":"Unauthorized"}`) 확인. 실제 전송 성공은 봇 생성 후 검증. **U12 조건**: cron 응답에는 `telegram: "sent"\|"failed"`만 싣고 reason은 싣지 않는다(공개 Actions 로그 가능성), 저장 성공 후 전송, 전송 실패해도 저장 유지 |
-| U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | 통합 테스트 |
+| U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | **완료**: `runBrief`(저장·전송 동시 시작, 서로 막지 않음), 응답 `{date, widgets, snapshot, telegram}`, 둘 다 성공해야 200 아니면 502. `BRIEF_CITY`는 공개 데모가 쓰기를 막아야 해서(REQ-F-013) 소유자 전용 설정으로 유지. 같은 날 재실행 시 중복 전송은 막지 않음. 서버리스 최대 실행 시간(`maxDuration`)은 배포(U14)에서 확인 |
 | U13 | 대시보드 마감: 스켈레톤·다크 모드·반응형·이력 목록 조회 연결 | 이력 차트는 제외 (MVP 이후), 차트 라이브러리 설치 금지 |
 | U14 | GitHub Actions cron + 배포 + 공개 데모 | |
 

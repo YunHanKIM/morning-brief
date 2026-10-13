@@ -6,7 +6,7 @@
 
 | 라우트 | 메서드 | 설명 |
 |---|---|---|
-| `/api/cron/brief` | POST | **(U9 구현)** 위젯 병렬 호출 후 결과 반환. 헤더 `Authorization: Bearer <CRON_SECRET>` 필수(상수 시간 비교), 없거나 불일치 시 `401`(외부 API 무호출), `CRON_SECRET` 미설정·공백 포함이면 `500 {error:"server not configured"}`로 닫힘, `GET` 등은 `405`. 응답 `200 {date(KST), city, widgets: {weather\|exchange\|news\|quote: "ok" \| "error"}, results: {<name>: {status, data\|message}}}`, `Cache-Control: no-store`. **(U12 예정)** 스냅샷 저장 → Telegram 전송 후 응답에 `telegram: "sent" \| "failed"` 추가 |
+| `/api/cron/brief` | POST | **(U9·U12 구현)** 위젯 병렬 호출 → 스냅샷 저장·Telegram 전송(동시에 시작, 서로 막지 않음). 헤더 `Authorization: Bearer <CRON_SECRET>` 필수(상수 시간 비교), 없거나 불일치 시 `401`(외부 API 무호출), `CRON_SECRET` 미설정·공백 포함이면 `500 {error:"server not configured"}`로 닫힘, `GET` 등은 `405`. 응답 `{date(KST), widgets: {weather\|exchange\|news\|quote: "ok" \| "error"}, snapshot: "saved" \| "failed", telegram: "sent" \| "failed"}`, `Cache-Control: no-store`. **저장과 전송이 모두 성공해야 `200`, 하나라도 실패하면 `502`**(스케줄러가 실패로 표시하도록). 위젯 데이터와 실패 이유는 응답에 싣지 않고 서버 로그(`[brief] ...`)에만 남긴다(공개 Actions 로그 보호). 같은 날 재실행하면 스냅샷은 덮어쓰고 Telegram은 다시 전송된다(중복 방지 없음) |
 | `/api/brief` | GET | **(U10 구현)** 오늘(한국 시간) 또는 `?date=YYYY-MM-DD`의 브리핑 스냅샷 조회. 인증 없음, 읽기 전용. `200 {date, city, widgets, results}`, 잘못된 날짜 `400 {error:"invalid date"}`, 없음 `404`, 저장소 설정 없음 `503`, 저장소 오류 `502 {error:"storage error"}`(상세·토큰 비노출), `Cache-Control: no-store` |
 | `/api/brief/history` | GET | **(U10 구현)** 최근 브리핑 날짜 목록(최신순). `?limit=1~90`(기본 30), 잘못된 값 `400 {error:"invalid limit"}`. `200 {dates:[...]}`. 인증 없음, 읽기 전용, 503/502는 위와 같음 |
 
