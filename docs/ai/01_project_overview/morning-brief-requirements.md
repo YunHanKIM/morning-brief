@@ -66,7 +66,7 @@
 | ~~U7a / U7b~~ | ~~GitHub 활동~~ — MVP 제외(번호는 유지). 내가 한 일은 내가 이미 알아 아침 브리핑 가치가 낮고, 사용자 이름 입력 UI와 rate limit·토큰 부담이 크다. 알림(리뷰 요청 등)은 비공개 정보라 공개 데모(REQ-F-013)에 부적합 | 후순위 |
 | U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | U8a·U8b 완료: 소스 확정 = ZenQuotes(영어, `/api/today`) + MyMemory 한글 자동 번역(무료·키 없음, 하루 5,000자). 번역 실패 시 영어만(null). 결과는 `use cache`로 저장(명언 hours, 번역 성공 days, 실패 minutes). 카드: 영어 원문(blockquote lang=en)+한글 번역("자동 번역" 표시), 번역이 있을 때만 MyMemory 출처 표기(ZenQuotes는 항상), 번역이 없으면 영어만 + 안내 |
 | U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트. **완료**: `POST /api/cron/brief`, Bearer 상수 시간 비교, 인증 실패 시 외부 API 무호출, 날씨 도시는 환경변수 `BRIEF_CITY`(서버 저장소 U10 전까지 임시) |
-| U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | 저장소 확정 (Supabase / Vercel KV) |
+| U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | **완료**: 저장소 = Upstash Redis(REST, `fetch`만, 의존성 없음). Vercel KV는 종료되어 Upstash로 대체됨. 키 `brief:날짜` + 이력 정렬 집합 `briefs`. 읽은 값은 매번 재검증. **U12 조건**: `save`는 SET 후 ZADD라 원자적이지 않다(멱등) → 저장 실패는 실패로 보고하고 재시도할 것. Upstash 실서비스 호출은 계정 생성 후 U12/U14에서 검증 |
 | U11 | Telegram 전송 (단독 함수, fetch mock) | |
 | U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | 통합 테스트 |
 | U13 | 대시보드 마감: 스켈레톤·다크 모드·반응형·이력 목록 조회 연결 | 이력 차트는 제외 (MVP 이후), 차트 라이브러리 설치 금지 |
@@ -81,7 +81,7 @@
 | 항목 | 결정 시점 |
 |---|---|
 | ~~환율 API 최종 선택~~ → Frankfurter 확정 (U5a, 키·결제 없음. 한국수출입은행은 대안으로만 유지) | 완료 |
-| 저장소 (Supabase 또는 Vercel KV) | U10 |
+| ~~저장소~~ → Upstash Redis로 확정 (U10). 무료 한도·비활성 정책은 계정 생성 시 공식 페이지에서 확인 | 완료 |
 | ~~오늘의 한마디 소스~~ → ZenQuotes(영어) + MyMemory 한글 자동 번역으로 확정 (U8a). 번역 품질 향상(AI 번역)은 후순위 | 완료 |
 | ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑의 대표 도시 저장은 U10 이후 | U2b·U4b 완료. 자동 브리핑 연결만 U10 이후 |
 | LLM 요약 포함 여부 | MVP 이후 |

@@ -16,6 +16,13 @@ export interface Brief {
 
 const WIDGET_NAMES: WidgetName[] = ['weather', 'exchange', 'news', 'quote']
 
+// 위젯별 ok/error 요약. 결과가 없는 위젯도 error로 센다
+export function summarizeWidgets(results: DashboardResults): Brief['widgets'] {
+  return Object.fromEntries(
+    WIDGET_NAMES.map((name) => [name, results[name]?.status === 'ok' ? 'ok' : 'error']),
+  ) as Brief['widgets']
+}
+
 export async function generateBrief({
   cityValue,
   now,
@@ -30,9 +37,5 @@ export async function generateBrief({
     results.weather = { status: 'error', message: 'BRIEF_CITY 설정이 올바르지 않습니다' }
   }
 
-  const widgets = Object.fromEntries(
-    WIDGET_NAMES.map((name) => [name, results[name]?.status === 'ok' ? 'ok' : 'error']),
-  ) as Brief['widgets']
-
-  return { date: kstDate(now), city, widgets, results }
+  return { date: kstDate(now), city, widgets: summarizeWidgets(results), results }
 }
