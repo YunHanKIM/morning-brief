@@ -1,54 +1,42 @@
 # Morning Brief — 디렉터리 구조
 
-## 현재 구조 (create-next-app + Jest 설정 직후)
+> 2026-10-13 기준 실제 구조(U0~U14). 계획 단계에 적었던 `registry.ts`, `src/lib/`, `src/app/history/`, `src/types/`는 만들지 않았다
+> (위젯은 `loadDashboardResults`가 직접 나열하고, 이력은 메인 페이지의 `?date=`로 보여준다).
 
 ```
 morning-brief/
-├── docs/ai/                # AI 하네스 문서
-├── public/
-├── src/app/                # layout.tsx, page.tsx, globals.css, favicon.ico (기본 템플릿)
-├── src/widgets/            # types.ts (Widget, WidgetResult), runWidget.ts (U1)
-│   └── weather/            # fetch.ts (zod 검증), normalize.ts, index.ts (U2)
-├── __tests__/              # Jest 테스트 (smoke, widgets/runWidget, widgets/weather)
-├── jest.config.ts
-├── next.config.ts
-├── eslint.config.mjs
-├── tsconfig.json
-└── package.json
-```
-
-`.github/`, `src/widgets/registry.ts`, `src/lib/`, `src/components/ui/`, `src/types/`, `src/app/api/`, `src/app/history/`는
-아직 없다. 아래는 목표 구조이며 해당 단위를 구현할 때 만든다.
-
-## 목표 구조 (계획안)
-
-```
-morning-brief/
-├── docs/ai/                    # AI 하네스 문서 (이 폴더)
 ├── .github/workflows/
-│   └── morning-brief.yml       # 매일 07:00 KST cron → /api/cron/brief 호출
+│   └── morning-brief.yml        # 매일 07:05 KST 예약 실행 → POST /api/cron/brief (U14)
+├── docs/ai/                     # AI 하네스 문서 (요구사항·스택·API 계약·배포 절차 등)
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx            # 오늘의 브리핑 대시보드
-│   │   ├── history/            # 지난 브리핑 이력
+│   │   ├── page.tsx             # 대시보드 (오늘 실시간 / ?date= 저장본 / 안내)
 │   │   └── api/
-│   │       ├── cron/brief/     # 브리핑 생성 (시크릿 토큰 필수)
-│   │       └── brief/          # 대시보드용 조회 (읽기 전용)
-│   ├── widgets/                # 위젯 플러그인 — 위젯 하나당 폴더 하나
-│   │   ├── types.ts            # Widget 인터페이스 (fetch → normalize → render)
-│   │   ├── registry.ts         # 등록된 위젯 목록
-│   │   └── weather/ ...
-│   ├── lib/
-│   │   ├── server/             # 서버 전용 (Telegram, 스냅샷 저장, cron 인증)
-│   │   └── client/             # 클라이언트 전용 헬퍼
-│   ├── components/
-│   │   └── ui/                 # shadcn 생성 파일 (직접 수정 금지)
-│   └── types/
-└── public/
+│   │       ├── cron/brief/      # POST 브리핑 생성·저장·전송 (토큰 필수)
+│   │       └── brief/           # GET 저장본 조회, history/ 날짜 목록 (공개 읽기 전용)
+│   ├── widgets/                 # 데이터를 가져오는 쪽 (화면과 무관)
+│   │   ├── types.ts, runWidget.ts, runWidgets.ts
+│   │   ├── weather/             # city.ts(검색·검증·주요 8곳), fetch, normalize, index
+│   │   ├── exchange/            # currencies.ts, fetch(8개 통화 일괄), normalize, index
+│   │   ├── news/                # fetch(Hacker News), normalize, index
+│   │   └── quote/               # zenquotes, translate, cached('use cache'), fetch, normalize, index
+│   ├── components/              # 화면 + 화면에 데이터를 넘기는 쪽
+│   │   ├── Dashboard, PageShell, WeatherCard, ExchangeCard, NewsCard, QuoteCard
+│   │   ├── CityPicker, cityActions('use server'), cityCookie
+│   │   ├── HistoryCard, SnapshotBanner
+│   │   └── loadDashboardResults, loadPageData, toDashboardResults
+│   ├── brief/                   # 자동 브리핑 로직
+│   │   ├── auth, briefCity, kstDate, generateBrief, runBrief
+│   ├── storage/                 # 스냅샷 저장소 (Upstash Redis REST / 개발용 메모리)
+│   │   ├── snapshotStore, snapshotSchema, upstashStore, memoryStore, getSnapshotStore, respond
+│   └── notify/                  # Telegram: formatBrief, telegram, sendBrief
+├── __tests__/                   # src와 같은 구조의 Jest 테스트 (+ workflow/ 파일 검사)
+├── __fixtures__/                # 테스트 공용 데이터·가짜 외부 API (테스트로 오인되지 않게 __tests__ 밖)
+├── jest.config.ts, next.config.ts, eslint.config.mjs, tsconfig.json, package.json
+└── .env.example                 # 필요한 환경변수 목록
 ```
 
-## 배치 규약
+## 의존 방향
 
-- 위젯은 `src/widgets/<name>/` 한 폴더에 `fetch.ts`(외부 호출+zod 검증), `normalize.ts`, `Card.tsx`(UI)를 둔다.
-- 서버 전용 코드(시크릿 사용)는 `src/lib/server/` 아래에만 둔다. 클라이언트 번들에 들어가면 안 된다.
-- 새 위젯 추가 시 `registry.ts`에 한 줄만 추가하면 되도록 유지한다.
+`app` → `components` / `brief` / `storage` / `notify` → `widgets`. `widgets`는 화면과 저장소를 모른다
+(그래서 대시보드와 자동 브리핑 API가 같은 위젯 코드를 쓴다).

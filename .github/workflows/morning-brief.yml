@@ -1,0 +1,49 @@
+# 매일 아침 배포된 앱의 POST /api/cron/brief를 불러 브리핑을 만들고 저장하고 Telegram으로 보낸다.
+#
+# 필요한 저장소 Secrets (Settings > Secrets and variables > Actions):
+#   BRIEF_URL   배포 주소 (예: https://morning-brief.vercel.app, https만 허용)
+#   CRON_SECRET 앱의 CRON_SECRET 환경변수와 같은 값
+#
+# 알아둘 점
+# - cron은 UTC 기준이다. 22:05 UTC = 한국 07:05. 정각은 몰려서 지연·누락이 잦아 5분 뒤로 잡았다
+# - 공개 저장소는 60일간 저장소 활동이 없으면 예약 실행이 자동으로 꺼진다(알림 없음).
+#   Actions 탭에서 이 워크플로에 disabled(비활성) 배너가 보이면 Enable workflow로 직접 켜고,
+#   Run workflow(수동 실행)로 성공을 확인한다. 커밋만으로 복구되었다고 단정하지 말고 상태를 직접 확인한다
+# - 재시도하지 않는다. 앱이 502를 돌려줘도 저장 또는 전송 중 한쪽은 이미 성공했을 수 있어
+#   다시 부르면 Telegram이 중복 전송된다. 실패하면 Actions 탭에서 확인하고 수동 실행(workflow_dispatch)한다
+name: Morning Brief
+
+on:
+  schedule:
+    - cron: '5 22 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: morning-brief
+  cancel-in-progress: false
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 브리핑 만들기 (저장 + Telegram 전송)
+        env:
+          BRIEF_URL: ${{ secrets.BRIEF_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BRIEF_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::BRIEF_URL, CRON_SECRET 저장소 secrets를 등록해야 합니다"
+            exit 1
+          fi
+          case "$BRIEF_URL" in
+            https://*) ;;
+            *) echo "::error::BRIEF_URL은 https:// 로 시작해야 합니다"; exit 1 ;;
+          esac
+          curl --silent --show-error --fail-with-body --max-time 120 \
+            --request POST "${BRIEF_URL%/}/api/cron/brief" \
+            --header "Authorization: Bearer ${CRON_SECRET}"
+          echo
