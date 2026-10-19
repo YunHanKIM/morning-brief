@@ -15,7 +15,7 @@
 
 ## 핵심 흐름
 
-1. 매일 아침 07:00 KST, GitHub Actions cron이 `/api/cron/brief`를 시크릿 토큰과 함께 호출한다.
+1. 매일 아침 09:30 KST, GitHub Actions cron이 `/api/cron/brief`를 시크릿 토큰과 함께 호출한다.
 2. 서버가 등록된 위젯의 외부 API를 병렬 호출하고 결과를 정규화한다.
 3. 오늘의 브리핑 스냅샷을 저장한다.
 4. 요약을 Telegram으로 전송한다.
