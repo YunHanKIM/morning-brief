@@ -6,7 +6,7 @@
 ```
 morning-brief/
 ├── .github/workflows/
-│   └── morning-brief.yml        # 매일 07:05 KST 예약 실행 → POST /api/cron/brief (U14)
+│   └── morning-brief.yml        # 매일 09:30 KST 예약 실행 → POST /api/cron/brief (U14)
 ├── docs/ai/                     # AI 하네스 문서 (요구사항·스택·API 계약·배포 절차 등)
 ├── src/
 │   ├── app/

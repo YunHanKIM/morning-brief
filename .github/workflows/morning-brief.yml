@@ -5,7 +5,7 @@
 #   CRON_SECRET 앱의 CRON_SECRET 환경변수와 같은 값
 #
 # 알아둘 점
-# - cron은 UTC 기준이다. 22:05 UTC = 한국 07:05. 정각은 몰려서 지연·누락이 잦아 5분 뒤로 잡았다
+# - cron은 UTC 기준이다. 00:30 UTC = 한국 09:30. 정각은 몰려서 지연·누락이 잦아 30분으로 잡았다
 # - 공개 저장소는 60일간 저장소 활동이 없으면 예약 실행이 자동으로 꺼진다(알림 없음).
 #   Actions 탭에서 이 워크플로에 disabled(비활성) 배너가 보이면 Enable workflow로 직접 켜고,
 #   Run workflow(수동 실행)로 성공을 확인한다. 커밋만으로 복구되었다고 단정하지 말고 상태를 직접 확인한다
@@ -15,7 +15,7 @@ name: Morning Brief
 
 on:
   schedule:
-    - cron: '5 22 * * *'
+    - cron: '30 0 * * *'
   workflow_dispatch:
 
 permissions: {}

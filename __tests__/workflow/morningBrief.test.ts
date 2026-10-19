@@ -37,13 +37,13 @@ describe('.github/workflows/morning-brief.yml', () => {
   })
 
   describe('언제 실행되나', () => {
-    it('예약 실행은 하나뿐이고 cron은 UTC 22:05다', () => {
-      expect(workflow.on.schedule).toEqual([{ cron: '5 22 * * *' }])
+    it('예약 실행은 하나뿐이고 cron은 UTC 00:30이다', () => {
+      expect(workflow.on.schedule).toEqual([{ cron: '30 0 * * *' }])
     })
 
-    it('그 시각은 한국 시간으로 매일 07:05다 (정각의 혼잡을 피함)', () => {
+    it('그 시각은 한국 시간으로 매일 09:30이다 (정각의 혼잡을 피함)', () => {
       const [minute, hour] = workflow.on.schedule[0].cron.split(' ')
-      expect({ hour: (Number(hour) + 9) % 24, minute: Number(minute) }).toEqual({ hour: 7, minute: 5 })
+      expect({ hour: (Number(hour) + 9) % 24, minute: Number(minute) }).toEqual({ hour: 9, minute: 30 })
     })
 
     it('수동 실행(workflow_dispatch)도 할 수 있다', () => {
