@@ -38,6 +38,15 @@ describe('WeatherCard', () => {
     document.cookie = `${CITY_COOKIE}=; path=/; max-age=0`
   })
 
+  it('날씨 데이터 출처(Open-Meteo, CC BY 4.0)를 새 탭 링크로 밝힌다', () => {
+    render(<WeatherCard result={ok(seoulData)} city={seoul} />)
+    const link = screen.getByRole('link', { name: 'Open-Meteo' })
+    expect(link.getAttribute('href')).toBe('https://open-meteo.com/')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('rel')).toContain('noopener')
+    expect(screen.getByText(/CC BY 4\.0/)).toBeTruthy()
+  })
+
   it('카드는 "날씨"라는 이름의 영역(region)으로 식별된다', () => {
     render(<WeatherCard city={seoul} result={ok(seoulData)} />)
     expect(screen.getByRole('region', { name: '날씨' })).toBeTruthy()

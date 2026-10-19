@@ -30,10 +30,16 @@ export function Dashboard({
   return (
     <PageShell>
       {banner}
-      <WeatherCard result={results.weather} loading={loading} city={city} readOnly={readOnly} />
-      <ExchangeCard result={results.exchange} loading={loading} selected={currency} />
-      <NewsCard result={results.news} loading={loading} />
-      <QuoteCard result={results.quote} loading={loading} />
+      <div className="grid gap-x-12 gap-y-8 md:grid-cols-2">
+        <WeatherCard result={results.weather} loading={loading} city={city} readOnly={readOnly} />
+        <ExchangeCard result={results.exchange} loading={loading} selected={currency} />
+        <div className="md:col-span-2">
+          <NewsCard result={results.news} loading={loading} />
+        </div>
+        <div className="md:col-span-2">
+          <QuoteCard result={results.quote} loading={loading} />
+        </div>
+      </div>
       {children}
     </PageShell>
   )

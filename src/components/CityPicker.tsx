@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { POPULAR_CITIES, type City } from '../widgets/weather/city'
 import { searchCitiesAction } from './cityActions'
+import { button, field, note } from './styles'
 
 type SearchState =
   | { kind: 'idle' }
@@ -57,14 +58,14 @@ export function CityPicker({
             type="button"
             disabled={disabled}
             onClick={() => onSelect(city)}
-            className="rounded border border-zinc-300 px-3 py-1 text-sm disabled:opacity-50 dark:border-zinc-700"
+            className={button}
           >
             {city.name}
           </button>
         ))}
       </div>
       <form onSubmit={search} className="flex flex-wrap items-center gap-2">
-        <label htmlFor="city-search" className="text-sm text-zinc-500 dark:text-zinc-400">
+        <label htmlFor="city-search" className="text-sm text-muted">
           도시 검색
         </label>
         <input
@@ -74,43 +75,37 @@ export function CityPicker({
           value={query}
           disabled={disabled}
           onChange={(event) => setQuery(event.target.value)}
-          className="rounded border border-zinc-300 bg-transparent px-2 py-1 dark:border-zinc-700"
+          className={field}
         />
-        <button
-          type="submit"
-          disabled={disabled}
-          className="rounded bg-zinc-900 px-3 py-1 text-sm text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <button type="submit" disabled={disabled} className={button}>
           검색
         </button>
       </form>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        한국 도시는 위 버튼이 가장 정확합니다. 그 밖의 도시는 영문 이름으로 검색하세요.
-      </p>
+      <p className={note}>한국 도시는 위 버튼이 가장 정확합니다. 그 밖의 도시는 영문 이름으로 검색하세요.</p>
       {state.kind === 'searching' && (
-        <p role="status" className="text-sm text-zinc-500">
+        <p role="status" className="text-sm text-muted">
           검색 중…
         </p>
       )}
       {state.kind === 'done' && state.cities.length === 0 && (
-        <p role="status" className="text-sm text-zinc-500">
+        <p role="status" className="text-sm text-muted">
           검색 결과가 없습니다
         </p>
       )}
       {state.kind === 'error' && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {`검색하지 못했습니다: ${state.message}`}
         </p>
       )}
       {state.kind === 'done' && state.cities.length > 0 && (
-        <ul aria-label="검색 결과" className="flex flex-col gap-1">
+        <ul aria-label="검색 결과" className="flex flex-col divide-y divide-rule border-y border-rule">
           {state.cities.map((city) => (
             <li key={`${city.latitude},${city.longitude}`}>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(city)}
-                className="w-full rounded border border-zinc-200 px-3 py-1 text-left text-sm disabled:opacity-50 dark:border-zinc-800"
+                className="w-full px-1 py-2 text-left text-sm hover:text-accent disabled:opacity-50"
               >
                 {label(city)}
               </button>

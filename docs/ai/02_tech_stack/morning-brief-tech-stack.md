@@ -11,6 +11,10 @@
 | 린트 | ESLint (eslint-config-next) |
 | 테스트 | Jest 30 (`next/jest`, `testEnvironment: node`), `@types/jest`, `ts-node` |
 | 데이터 검증 | zod 4.6.5 (외부 API 응답, U2에서 도입) |
+| 글꼴 | Noto Serif KR(제목·큰 숫자), Noto Sans KR(본문). 둘 다 SIL OFL 1.1이며 `next/font/google`이 빌드 때 내려받아 직접 서빙 |
+| 저장소 | Upstash Redis REST (`fetch`, SDK 없음, U10) |
+| 알림 | Telegram Bot API (`fetch`, SDK 없음, U11) |
+| 스케줄링 | GitHub Actions cron → `/api/cron/brief` (U14) |
 
 - 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트는 파일 맨 위에 `@jest-environment jsdom`
   독블록을 붙여 `jest-environment-jsdom` + React Testing Library로 실행한다(전역은 `node` 유지: jsdom에 `fetch`가 없어
@@ -24,10 +28,7 @@
 | 컴포넌트 | shadcn/ui, lucide-react |
 | 차트 | Recharts (이력 차트, MVP 이후) |
 | 클라이언트 데이터 패칭 | TanStack Query |
-| 알림 | Telegram Bot API (`sendMessage`, SDK 없이 fetch) |
-| 스케줄링 | GitHub Actions cron → `/api/cron/brief` |
-| 저장소 | 미정 — Supabase(Postgres) 또는 Vercel KV |
-| 배포 | Vercel (기본), Netlify (대안) |
+| 배포 | Vercel (확정) |
 
 ## 외부 API 후보
 
@@ -36,7 +37,7 @@
 | 날씨 | Open-Meteo | 불필요 |
 | 환율 | Frankfurter (ECB 기준, 확정) / 한국수출입은행(대안) | 전자 불필요, 후자 필요 |
 | 개발 뉴스 | Hacker News API, 기술 블로그 RSS | 불필요 |
-| 오늘의 한마디 | 무료 공개 API (미정) | 불필요 |
+| 오늘의 한마디 | ZenQuotes + MyMemory 한글 번역 (확정) | 불필요 |
 | AI 요약(후순위) | Claude API | 필요 |
 
 ## 결정 근거

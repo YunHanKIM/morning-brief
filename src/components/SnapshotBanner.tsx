@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { link } from './styles'
 
 export type SnapshotBannerState = 'viewing' | 'not-found' | 'invalid' | 'unavailable'
 
@@ -13,9 +14,11 @@ export function SnapshotBanner({ state, date }: { state: SnapshotBannerState; da
   }[state]
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-zinc-200 px-4 py-3 text-sm dark:border-zinc-800">
-      <p role={state === 'viewing' ? 'status' : 'alert'}>{message}</p>
-      <Link href="/" prefetch={false} className="underline underline-offset-2">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y border-rule py-3 text-sm">
+      <p role={state === 'viewing' ? 'status' : 'alert'} className={state === 'viewing' ? '' : 'text-danger'}>
+        {message}
+      </p>
+      <Link href="/" prefetch={false} className={link}>
         오늘 브리핑으로
       </Link>
     </div>
