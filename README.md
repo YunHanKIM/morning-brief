@@ -6,6 +6,10 @@
 
 ![Morning Brief 대시보드](docs/screenshots/dashboard.png)
 
+같은 내용이 Telegram 메시지로도 도착합니다.
+
+<img src="docs/screenshots/telegram.jpg" alt="Telegram으로 받은 아침 브리핑 메시지" width="320">
+
 ## 왜 만들었나
 
 아침마다 날씨 앱, 환율 사이트, 뉴스 사이트를 따로 여는 일이 번거로웠습니다. 그래서 한 화면에 모으고, 열지 않아도 정해진 시간에 브리핑이 도착하게 만들었습니다. 서버를 직접 운영하지 않고 무료 서비스(Vercel, Upstash, GitHub Actions)만으로 돌아가게 한 것도 목표였습니다.
