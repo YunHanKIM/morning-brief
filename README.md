@@ -42,8 +42,8 @@ flowchart LR
 
 | 구분 | 사용 |
 |---|---|
-| 프레임워크 | Next.js 16 (App Router, `cacheComponents`), React 19 |
-| 언어 | TypeScript (strict) |
+| 프레임워크 | Next.js 16 (App Router, `cacheComponents`) |
+| 언어 | React, TypeScript (strict) |
 | 스타일 | Tailwind CSS 4 |
 | 외부 응답 검증 | zod 4 |
 | 테스트 | Jest 30, React Testing Library |
