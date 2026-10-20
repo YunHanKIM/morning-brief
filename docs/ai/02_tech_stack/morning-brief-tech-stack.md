@@ -14,7 +14,7 @@
 | 글꼴 | Noto Serif KR(제목·큰 숫자), Noto Sans KR(본문). 둘 다 SIL OFL 1.1이며 `next/font/google`이 빌드 때 내려받아 직접 서빙 |
 | 저장소 | Upstash Redis REST (`fetch`, SDK 없음, U10) |
 | 알림 | Telegram Bot API (`fetch`, SDK 없음, U11) |
-| 스케줄링 | GitHub Actions cron → `/api/cron/brief` (U14) |
+| 스케줄링 | Cloudflare Workers Cron → `/api/cron/brief` (GitHub Actions는 수동 실행용) |
 
 - 테스트는 TDD(Red → Green → Refactor)로 작성한다. 컴포넌트 테스트는 파일 맨 위에 `@jest-environment jsdom`
   독블록을 붙여 `jest-environment-jsdom` + React Testing Library로 실행한다(전역은 `node` 유지: jsdom에 `fetch`가 없어
@@ -42,6 +42,7 @@
 
 ## 결정 근거
 
-- **GitHub Actions를 스케줄러로 쓴다**: Vercel/Netlify 무료 플랜의 cron 제약이 크고 변동이 잦다.
-  Actions는 시각 지정이 정확하고 배포 플랫폼에 종속되지 않는다. 플랜 한도는 시작 전에 공식 문서로 재확인한다.
+- **Cloudflare Workers Cron을 스케줄러로 쓴다**: Vercel/Netlify 무료 플랜의 cron 제약이 크고 변동이 잦다.
+  처음에는 GitHub Actions cron을 썼지만 예약이 몇 시간씩 밀려(2026-10-20: 4시간 38분) 옮겼다. 앱은 그대로 두고 배포 플랫폼에 종속되지 않는다.
+  플랜 한도는 공식 문서로 재확인한다.
 - **Playwright를 쓰지 않는다**: 서버리스에서 헤드리스 브라우저 실행이 까다롭다. 공개 API 중심으로 설계한다.

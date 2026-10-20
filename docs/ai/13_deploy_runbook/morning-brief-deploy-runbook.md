@@ -12,7 +12,8 @@ API 라우트(서버 함수)가 있어 Node 런타임이 필요하다 — 순수
 | **Vercel** 계정 (GitHub로 가입 가능, Hobby 무료) | 앱 배포 | 배포 주소 `https://….vercel.app` |
 | **Upstash** 계정 + Redis DB 1개 (무료) | 브리핑 저장소 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
 | **Telegram 봇** (@BotFather로 생성) + 봇과 대화 시작 | 아침 메시지 수신 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` |
-| **GitHub** (이미 있음) 저장소 Secrets 등록 | 예약 실행 | `BRIEF_URL`, `CRON_SECRET` |
+| **Cloudflare** 계정 (무료) | 매일 09:30 예약 실행 (Workers Cron) | Worker 시크릿 `BRIEF_URL`, `CRON_SECRET` |
+| **GitHub** (이미 있음) 저장소 Secrets 등록 | 수동 실행(Run workflow)용 | `BRIEF_URL`, `CRON_SECRET` |
 | 직접 만드는 비밀 문자열 | 자동 실행 인증 | `CRON_SECRET` (긴 무작위 값) |
 
 가입에 카드가 필요한지는 가입 화면에서 확인한다. Vercel Hobby는 개인·비상업 용도 플랜이다(이용 약관 확인).
@@ -25,7 +26,28 @@ API 라우트(서버 함수)가 있어 Node 런타임이 필요하다 — 순수
 4. **Telegram 봇**: @BotFather에서 `/newbot` → 토큰 받기 → 만든 봇에게 아무 메시지나 한 번 보내기 →
    `https://api.telegram.org/bot<토큰>/getUpdates` 응답의 `chat.id` 확인 (토큰이 주소에 들어가므로 화면 공유·기록에 남기지 않는다).
 5. **Vercel**: New Project → 위 GitHub 저장소 선택 (Next.js 자동 감지) → 환경변수 등록 → Deploy.
-6. **GitHub Secrets**: 저장소 Settings > Secrets and variables > Actions 에 `BRIEF_URL`(배포 주소, https), `CRON_SECRET`(앱과 같은 값) 등록.
+6. **GitHub Secrets**: 저장소 Settings > Secrets and variables > Actions 에 `BRIEF_URL`(배포 주소, https), `CRON_SECRET`(앱과 같은 값) 등록. 수동 실행용이다.
+7. **Cloudflare Worker 배포** (매일 09:30 KST 예약 실행, 아래 "Cloudflare Worker" 절 참고).
+
+### Cloudflare Worker
+
+GitHub Actions 예약 실행이 몇 시간씩 밀려(2026-10-20 14:08 KST 도착, 4시간 38분 지연) 예약만 Cloudflare Workers Cron으로 옮겼다. 앱은 그대로다.
+
+```bash
+cd worker
+npx wrangler login
+npx wrangler secret put BRIEF_URL        # 배포 주소 (https만 허용). Worker가 아직 없으면 새로 만들지 묻는다 → yes
+npx wrangler secret put CRON_SECRET      # 앱의 CRON_SECRET과 같은 값
+npx wrangler deploy                      # wrangler.toml의 cron "30 0 * * *" (= 09:30 KST) 등록
+```
+
+- **시크릿은 `|` 파이프로 넣지 말고 프롬프트에 직접 붙여넣는다.** Windows PowerShell 5.1에서 `값 | npx wrangler secret put …` 으로 넣으면 값 앞에 눈에 안 보이는 BOM(`EF BB BF`)이 붙어 앱이 401로 거절한다(2026-10-20 실제로 겪음).
+  Worker는 공백·BOM·한글이 섞인 값을 호출 전에 막지만, 다시 등록하는 것은 사람이 해야 한다.
+- **cron 변경은 반영까지 최대 15분 걸린다.** 시각을 바꿔 시험할 때는 20분 뒤로 잡는다(4~5분 뒤로 잡았을 때는 실행되지 않았다).
+- **시크릿을 먼저 넣고 deploy한다.** 반대로 하면 cron이 켜진 뒤 시크릿이 없는 짧은 틈에 예약 시각이 오면 설정 오류로 실패한다.
+- 시크릿은 파일이 아니라 `wrangler secret put`으로만 넣는다. 값을 바꾸면 Vercel·GitHub·Cloudflare 세 곳을 맞춘다.
+- 등록 후 Cloudflare 대시보드 > Workers > `morning-brief-cron` > Triggers 에서 cron이 보이는지, Logs에서 `브리핑 호출 성공`이 찍히는지 확인한다.
+- **GitHub 워크플로의 예약(schedule)은 제거됐다.** 다시 켜면 두 곳에서 호출되어 Telegram이 중복 전송된다.
 
 ### Vercel 환경변수
 
@@ -43,6 +65,7 @@ API 라우트(서버 함수)가 있어 Node 런타임이 필요하다 — 순수
 2. `GET <주소>/api/brief` → 저장 전에는 `404 {"error":"not found"}` 이면 정상. `503`이면 Upstash 환경변수 확인.
 3. `POST <주소>/api/cron/brief`를 토큰 없이 호출 → `401` 이어야 한다.
 4. Actions 탭 > Morning Brief > **Run workflow**(수동 실행) → 성공(초록)해야 하고, 로그에 `{"date":…,"snapshot":"saved","telegram":"sent"}` 가 보인다.
+   (Worker를 배포한 뒤에는 `npx wrangler tail`로 로그를 보며 다음 09:30을 기다리거나, 대시보드에서 cron 이벤트를 수동으로 시험한다.)
 5. Telegram에 메시지가 도착했는지.
 6. 대시보드 아래 "지난 브리핑"에 오늘 날짜가 생기고, 누르면 읽기 전용으로 열리는지.
 7. 실패 확인: `snapshot`/`telegram` 중 `failed`가 있으면 Actions가 빨갛게(502) 끝난다. 이유는 **응답이 아니라 Vercel 로그**(`[brief] …`)에 있다.
@@ -58,17 +81,14 @@ API 라우트(서버 함수)가 있어 Node 런타임이 필요하다 — 순수
 
 ## 4. 운영 중 알아둘 점
 
-- **예약 실행은 09:30 KST**(00:30 UTC). 정각을 피했지만 GitHub 부하에 따라 지연되거나 드물게 누락될 수 있다.
-- **공개 저장소는 60일간 저장소 활동이 없으면 예약 실행이 자동으로 꺼진다(알림 없음).** 아침 메시지가 안 오면 가장 먼저 이것을 의심한다.
-  점검(두 달에 한 번, 또는 메시지가 끊겼을 때): GitHub 저장소 > Actions > **Morning Brief** 를 열어
-  ① "This scheduled workflow is disabled …" 같은 **비활성(disabled) 배너**가 없는지, ② 최근 실행 기록이 매일 있는지 본다.
-  배너가 있으면 **Enable workflow**를 눌러 직접 켜고, **Run workflow**(수동 실행)가 성공(초록)하고 Telegram이 도착하는지까지 확인한다.
-  커밋을 하면 다시 켜진다는 말도 있지만 보장되지 않으니 상태를 직접 확인한다.
+- **예약 실행은 09:30 KST**(00:30 UTC)에 Cloudflare Worker가 맡는다. GitHub Actions 예약은 몇 시간씩 밀려서 쓰지 않는다.
+  Cloudflare도 지연될 수 있으니 배포 후 며칠은 도착 시각을 확인한다. 메시지가 안 오면 Cloudflare 대시보드 > Workers > `morning-brief-cron` 의 Logs·Triggers를 먼저 본다.
+- **Worker도 재시도하지 않는다.** 앱이 502를 돌려주면 Worker 실행이 실패로 기록될 뿐이다. 필요할 때만 GitHub Actions의 Run workflow로 수동 실행한다.
 - **재시도하지 않는다.** 같은 날 두 번 실행하면 스냅샷은 덮어쓰고 Telegram은 다시 전송된다. 502가 났으면 어느 쪽이 실패했는지 로그로 보고 필요할 때만 수동 실행한다.
 - **공개 데모에서 열려 있는 것**: 대시보드, `GET /api/brief`, `GET /api/brief/history`, 그리고 도시 검색·날씨 조회(Server Action, 외부 무료 API를 호출함).
   쓰기·cron 엔드포인트는 토큰으로 보호된다. 방문자가 많아지면 도시 검색이 무료 지오코딩 한도를 쓰므로 필요 시 요청 제한을 추가한다(미구현).
-- **비밀값 교체**: `CRON_SECRET`을 바꾸면 Vercel과 GitHub Secrets 두 곳을 같은 값으로 맞춘다. 봇 토큰이 노출됐으면 @BotFather에서 `/revoke`.
-- 실패 알림: GitHub은 실패한 워크플로를 계정 이메일로 알려 주는 것이 기본이다 (설정에서 확인).
+- **비밀값 교체**: `CRON_SECRET`을 바꾸면 Vercel, GitHub Secrets, Cloudflare Worker 세 곳을 같은 값으로 맞춘다. 봇 토큰이 노출됐으면 @BotFather에서 `/revoke`.
+- 실패 알림: Worker 실행 실패는 Cloudflare 대시보드에서 확인한다. 이메일 알림이 필요하면 Cloudflare 알림 설정에서 따로 켠다.
 
 ## 5. 로컬 실행
 

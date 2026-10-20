@@ -6,7 +6,10 @@
 ```
 morning-brief/
 ├── .github/workflows/
-│   └── morning-brief.yml        # 매일 09:30 KST 예약 실행 → POST /api/cron/brief (U14)
+│   └── morning-brief.yml        # 수동 실행(workflow_dispatch) 전용 → POST /api/cron/brief (U14)
+├── worker/
+│   ├── src/index.ts             # Cloudflare Worker: 매일 09:30 KST 예약 실행 → POST /api/cron/brief
+│   └── wrangler.toml            # cron "30 0 * * *" (시크릿은 wrangler secret put)
 ├── docs/ai/                     # AI 하네스 문서 (요구사항·스택·API 계약·배포 절차 등)
 ├── src/
 │   ├── app/

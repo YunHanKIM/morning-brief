@@ -19,7 +19,7 @@
 | REQ-F-009 | 스냅샷 저장·조회 | 오늘/날짜별 브리핑을 저장하고 `GET /api/brief`로 조회. `GET /api/brief/history`가 최근 날짜 목록을 반환 | 저장소는 U10에서 확정 | U10 |
 | REQ-F-010 | Telegram 전송 | 브리핑 요약이 지정 chat으로 전송됨. 실패해도 저장은 유지 | SDK 없이 `fetch`. 토큰 노출 금지 | U11 |
 | REQ-F-011 | 대시보드 UI | 오늘의 브리핑 표시, 위젯별 로딩/오류/빈 상태, 반응형·다크 모드 | 외부 HTML 렌더 금지 | U4, 각 위젯 카드, U13 |
-| REQ-F-012 | 스케줄 실행 | 매일 09:30 KST에 GitHub Actions가 API를 호출. 수동 실행 가능 | 배포 플랫폼 cron에 의존하지 않음 | U14 |
+| REQ-F-012 | 스케줄 실행 | 매일 09:30 KST에 Cloudflare Workers Cron이 API를 호출(GitHub Actions 예약은 수 시간 지연되어 교체, 2026-10-20). GitHub Actions 수동 실행 가능 | 배포 플랫폼 cron에 의존하지 않음 | U14 |
 | REQ-F-013 | 공개 읽기 전용 데모 | 인증 없이 대시보드와 조회 API 열람 가능, 쓰기는 불가 | 쓰기·cron 엔드포인트는 보호 | U14 |
 
 ## 2. 비기능 요구사항
@@ -70,9 +70,9 @@
 | U11 | Telegram 전송 (단독 함수, fetch mock) | **완료**: `formatBrief`(평문, 4096자 제한), `sendTelegramMessage`(토큰은 URL 경로라 형식 엄격 검사, 실패는 던지지 않고 reason만 반환·토큰/주소/본문 비노출), `sendBriefToTelegram`(`sent`/`failed`). 가짜 토큰으로 실제 Telegram 호출해 오류 응답 형식(401 `{"ok":false,"error_code":401,"description":"Unauthorized"}`) 확인. 실제 전송 성공은 봇 생성 후 검증. **U12 조건**: cron 응답에는 `telegram: "sent"\|"failed"`만 싣고 reason은 싣지 않는다(공개 Actions 로그 가능성), 저장 성공 후 전송, 전송 실패해도 저장 유지 |
 | U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | **완료**: `runBrief`(저장·전송 동시 시작, 서로 막지 않음), 응답 `{date, widgets, snapshot, telegram}`, 둘 다 성공해야 200 아니면 502. `BRIEF_CITY`는 공개 데모가 쓰기를 막아야 해서(REQ-F-013) 소유자 전용 설정으로 유지. 같은 날 재실행 시 중복 전송은 막지 않음. 서버리스 최대 실행 시간(`maxDuration`)은 배포(U14)에서 확인 |
 | U13 | 대시보드 마감: 스켈레톤·다크 모드·반응형·이력 목록 조회 연결 | 이력 차트는 제외 (MVP 이후), 차트 라이브러리 설치 금지. **기능 부분 완료**: 오늘 화면에 "지난 브리핑" 목록(최근 14개), `/?date=YYYY-MM-DD`로 저장본을 읽기 전용으로 보기(도시 바꾸기 숨김, 환율 전환은 가능), 날짜는 저장소 접근 전에 엄격 검증하고 잘못된 입력은 화면에 되풀이하지 않음, 화면 전환 시 카드가 새로 만들어지도록 `key`. **디자인 부분(스켈레톤·다크 모드·반응형 다듬기)은 사용자 요청으로 나중에** |
-| U14 | GitHub Actions cron + 배포 + 공개 데모 | **코드·문서 부분 완료**: `.github/workflows/morning-brief.yml`(09:30 KST, 수동 실행 가능, 권한 없음, 외부 액션 없음, 재시도 없음, 비밀값은 env로만), 워크플로 파일 안전 규칙 테스트, 배포 절차·점검표(`13_deploy_runbook`). **남은 것은 사용자가 직접**: Vercel/Upstash/Telegram 계정·값 준비, 푸시, 첫 배포 후 점검 |
+| U14 | 스케줄 실행 + 배포 + 공개 데모 | **완료**: 예약 실행은 Cloudflare Workers Cron(`worker/`, 09:30 KST, 재시도 없음, 리다이렉트 차단, 시크릿 형식 검사). GitHub Actions 예약은 수 시간 지연되어(2026-10-20 4시간 38분) 제거하고 `.github/workflows/morning-brief.yml`은 수동 실행 전용(권한 없음, 외부 액션 없음, 비밀값은 env로만). 워크플로·Worker 테스트, 배포 절차·점검표(`13_deploy_runbook`) |
 
-진행 상태: U0~U12 완료, U13 기능 부분 완료(디자인 보류), U14 코드·문서 완료(실제 배포·계정 준비는 사용자 몫). U7(GitHub 활동)은 MVP 제외.
+진행 상태: U0~U12 완료, U13 기능 부분 완료(디자인 보류), U14 완료(Vercel·Upstash·Telegram·Cloudflare 배포·연결 확인, 도착 시각은 며칠 지켜볼 예정). U7(GitHub 활동)은 MVP 제외.
 
 운영 규칙: 한 번에 한 단위만 만든다. 단위가 끝나면 (1) 테스트 통과 (2) codex-critic 리뷰 반영 (3) 관련 `docs/ai` 갱신 (4) 커밋 순서로 마치고 멈춰 보고한다.
 
