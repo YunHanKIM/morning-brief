@@ -11,7 +11,7 @@ interface Step {
 
 interface Workflow {
   name: string
-  on: { schedule: Array<{ cron: string }>; workflow_dispatch: unknown }
+  on: { workflow_dispatch: unknown }
   permissions: Record<string, string>
   concurrency: { group: string; 'cancel-in-progress': boolean }
   jobs: Record<string, { 'runs-on': string; 'timeout-minutes': number; steps: Step[] }>
@@ -37,17 +37,12 @@ describe('.github/workflows/morning-brief.yml', () => {
   })
 
   describe('언제 실행되나', () => {
-    it('예약 실행은 하나뿐이고 cron은 UTC 00:30이다', () => {
-      expect(workflow.on.schedule).toEqual([{ cron: '30 0 * * *' }])
+    it('예약 실행은 없다 (매일 실행은 Cloudflare Worker가 맡고, 겹치면 Telegram이 중복 전송된다)', () => {
+      expect(Object.keys(workflow.on)).not.toContain('schedule')
     })
 
-    it('그 시각은 한국 시간으로 매일 09:30이다 (정각의 혼잡을 피함)', () => {
-      const [minute, hour] = workflow.on.schedule[0].cron.split(' ')
-      expect({ hour: (Number(hour) + 9) % 24, minute: Number(minute) }).toEqual({ hour: 9, minute: 30 })
-    })
-
-    it('수동 실행(workflow_dispatch)도 할 수 있다', () => {
-      expect(Object.keys(workflow.on)).toContain('workflow_dispatch')
+    it('수동 실행(workflow_dispatch)만 가능하다', () => {
+      expect(Object.keys(workflow.on)).toEqual(['workflow_dispatch'])
     })
 
     it('겹쳐 실행되지 않는다 (같은 그룹, 진행 중인 것을 취소하지 않음)', () => {

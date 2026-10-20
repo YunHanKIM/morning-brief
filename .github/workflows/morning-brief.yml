@@ -1,21 +1,18 @@
-# 매일 아침 배포된 앱의 POST /api/cron/brief를 불러 브리핑을 만들고 저장하고 Telegram으로 보낸다.
+# 배포된 앱의 POST /api/cron/brief를 수동으로 불러 브리핑을 만들고 저장하고 Telegram으로 보낸다.
+# 매일 09:30 KST 예약 실행은 이 워크플로가 아니라 Cloudflare Worker(worker/)가 맡는다.
+# GitHub 예약 실행이 몇 시간씩 밀려(2026-10-20에는 4시간 38분) 스케줄러만 옮겼다.
 #
 # 필요한 저장소 Secrets (Settings > Secrets and variables > Actions):
 #   BRIEF_URL   배포 주소 (예: https://morning-brief.vercel.app, https만 허용)
 #   CRON_SECRET 앱의 CRON_SECRET 환경변수와 같은 값
 #
 # 알아둘 점
-# - cron은 UTC 기준이다. 00:30 UTC = 한국 09:30. 정각은 몰려서 지연·누락이 잦아 30분으로 잡았다
-# - 공개 저장소는 60일간 저장소 활동이 없으면 예약 실행이 자동으로 꺼진다(알림 없음).
-#   Actions 탭에서 이 워크플로에 disabled(비활성) 배너가 보이면 Enable workflow로 직접 켜고,
-#   Run workflow(수동 실행)로 성공을 확인한다. 커밋만으로 복구되었다고 단정하지 말고 상태를 직접 확인한다
+# - 예약(schedule)을 다시 켜면 Worker와 겹쳐 Telegram이 중복 전송된다. 켜지 말 것
 # - 재시도하지 않는다. 앱이 502를 돌려줘도 저장 또는 전송 중 한쪽은 이미 성공했을 수 있어
 #   다시 부르면 Telegram이 중복 전송된다. 실패하면 Actions 탭에서 확인하고 수동 실행(workflow_dispatch)한다
 name: Morning Brief
 
 on:
-  schedule:
-    - cron: '30 0 * * *'
   workflow_dispatch:
 
 permissions: {}

@@ -1,0 +1,10 @@
+# 매일 09:30 KST(= 00:30 UTC)에 앱의 /api/cron/brief를 부르는 Cloudflare Worker.
+# 시크릿은 파일에 적지 않고 wrangler secret put 으로 등록한다 (docs/ai/13_deploy_runbook 참고).
+name = "morning-brief-cron"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+# cron 전용이라 외부에서 부를 주소가 필요 없다 (workers.dev 하위 도메인 등록도 불필요)
+workers_dev = false
+
+[triggers]
+crons = ["30 0 * * *"]
