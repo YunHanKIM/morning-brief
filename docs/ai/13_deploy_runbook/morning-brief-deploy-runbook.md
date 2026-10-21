@@ -54,7 +54,7 @@ npx wrangler deploy                      # wrangler.toml의 cron "30 0 * * *" (=
 | 이름 | 값 | 비고 |
 |---|---|---|
 | `CRON_SECRET` | 2번에서 만든 값 | 비면 API는 500으로 닫힘 |
-| `BRIEF_CITY` | `서울` 등 주요 도시 이름 (또는 도시 JSON) | 비면 서울 |
+| `BRIEF_CITY` | `서울` 등 주요 도시 이름 (또는 도시 JSON) | 비면 서울. 대시보드에서 고른 도시(Upstash `brief-city`)가 있으면 그쪽이 우선 |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Upstash 값 | https 주소만 허용 |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Telegram 값 | 형식이 틀리면 전송은 failed |
 | `SNAPSHOT_STORE` | **비워 둔다** | `memory`는 개발용(재시작하면 사라짐) |
@@ -85,8 +85,8 @@ npx wrangler deploy                      # wrangler.toml의 cron "30 0 * * *" (=
   Cloudflare도 지연될 수 있으니 배포 후 며칠은 도착 시각을 확인한다. 메시지가 안 오면 Cloudflare 대시보드 > Workers > `morning-brief-cron` 의 Logs·Triggers를 먼저 본다.
 - **Worker도 재시도하지 않는다.** 앱이 502를 돌려주면 Worker 실행이 실패로 기록될 뿐이다. 필요할 때만 GitHub Actions의 Run workflow로 수동 실행한다.
 - **재시도하지 않는다.** 같은 날 두 번 실행하면 스냅샷은 덮어쓰고 Telegram은 다시 전송된다. 502가 났으면 어느 쪽이 실패했는지 로그로 보고 필요할 때만 수동 실행한다.
-- **공개 데모에서 열려 있는 것**: 대시보드, `GET /api/brief`, `GET /api/brief/history`, 그리고 도시 검색·날씨 조회(Server Action, 외부 무료 API를 호출함).
-  쓰기·cron 엔드포인트는 토큰으로 보호된다. 방문자가 많아지면 도시 검색이 무료 지오코딩 한도를 쓰므로 필요 시 요청 제한을 추가한다(미구현).
+- **공개 데모에서 열려 있는 것**: 대시보드, `GET /api/brief`, `GET /api/brief/history`, 그리고 도시 검색·날씨 조회·브리핑 도시 저장(Server Action. 외부 무료 API를 호출하고, 도시를 고르면 자동 브리핑 도시가 바뀜).
+  쓰기·cron 엔드포인트는 토큰으로 보호된다. 단, 브리핑 도시 저장은 개인용 데모라 의도적으로 열어 두었다(방문자가 Telegram 브리핑 도시를 바꿀 수 있음). 방문자가 많아지면 도시 검색이 무료 지오코딩 한도를 쓰므로 필요 시 요청 제한을 추가한다(미구현).
 - **비밀값 교체**: `CRON_SECRET`을 바꾸면 Vercel, GitHub Secrets, Cloudflare Worker 세 곳을 같은 값으로 맞춘다. 봇 토큰이 노출됐으면 @BotFather에서 `/revoke`.
 - 실패 알림: Worker 실행 실패는 Cloudflare 대시보드에서 확인한다. 이메일 알림이 필요하면 Cloudflare 알림 설정에서 따로 켠다.
 

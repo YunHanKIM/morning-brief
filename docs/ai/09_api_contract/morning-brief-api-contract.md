@@ -15,7 +15,7 @@
 | 이름 | 용도 | 노출 |
 |---|---|---|
 | `CRON_SECRET` | cron 엔드포인트 인증. 앞뒤 공백·줄바꿈은 무시, 중간 공백은 설정 오류 | 서버 전용 (GitHub Actions secret에도 동일 값) |
-| `BRIEF_CITY` | 자동 브리핑의 날씨 도시(주요 도시 이름 또는 도시 JSON, 비면 서울, 잘못되면 날씨만 오류). 서버 저장소(U10) 전까지의 임시 | 서버 전용 |
+| `BRIEF_CITY` | 자동 브리핑의 기본 날씨 도시(주요 도시 이름 또는 도시 JSON, 비면 서울, 잘못되면 날씨만 오류). 대시보드에서 저장한 도시(저장소 키 `brief-city`)가 있으면 그쪽이 우선 | 서버 전용 |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | 스냅샷 저장소(Upstash Redis REST). Vercel 연동이 넣어 주는 `KV_REST_API_URL`, `KV_REST_API_TOKEN` 이름도 받는다(앞의 이름 우선). 주소는 https만, 둘 다 있어야 사용 | 서버 전용 |
 | `SNAPSHOT_STORE` | `memory`로 명시하면 개발용 메모리 저장소 사용(서버 재시작 시 사라짐). 설정이 없을 때 조용히 메모리에 저장하지 않는다 | 서버 전용 |
 | `TELEGRAM_BOT_TOKEN` | Telegram 전송 | 서버 전용 |

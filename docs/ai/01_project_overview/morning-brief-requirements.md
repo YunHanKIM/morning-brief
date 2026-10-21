@@ -20,7 +20,7 @@
 | REQ-F-010 | Telegram 전송 | 브리핑 요약이 지정 chat으로 전송됨. 실패해도 저장은 유지 | SDK 없이 `fetch`. 토큰 노출 금지 | U11 |
 | REQ-F-011 | 대시보드 UI | 오늘의 브리핑 표시, 위젯별 로딩/오류/빈 상태, 반응형·다크 모드 | 외부 HTML 렌더 금지 | U4, 각 위젯 카드, U13 |
 | REQ-F-012 | 스케줄 실행 | 매일 09:30 KST에 Cloudflare Workers Cron이 API를 호출(GitHub Actions 예약은 수 시간 지연되어 교체, 2026-10-20). GitHub Actions 수동 실행 가능 | 배포 플랫폼 cron에 의존하지 않음 | U14 |
-| REQ-F-013 | 공개 읽기 전용 데모 | 인증 없이 대시보드와 조회 API 열람 가능, 쓰기는 불가 | 쓰기·cron 엔드포인트는 보호 | U14 |
+| REQ-F-013 | 공개 읽기 전용 데모 | 인증 없이 대시보드와 조회 API 열람 가능, 쓰기는 불가(예외: 브리핑 도시 저장) | 쓰기·cron 엔드포인트는 보호 | U14 |
 
 ## 2. 비기능 요구사항
 
@@ -60,15 +60,15 @@
 | U3 | 위젯 병렬 실행 + 부분 실패 집계 (REQ-F-007) | |
 | U2b | 도시 검색·검증·도시별 날씨 조회 로직 (REQ-F-002): `searchCities`(주요 도시 우선, 지오코딩), `parseCity`, `createWeatherWidget(city)` | 한글 짧은 이름(서울, 부산)은 지오코딩이 부정확해 주요 8곳 좌표 고정. 완료 |
 | U4 | 날씨 카드 UI + 대시보드 골격 (REQ-F-011) | `jsdom`, RTL 도입. 컴포넌트 테스트 파일에만 `@jest-environment jsdom` 독블록 사용(전역 `node` 유지), `jest-dom` 미도입 |
-| U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저(`document.cookie`)에서 저장하고 서버는 읽을 때마다 `parseCity`로 검증. 매일 아침 자동 브리핑의 대표 도시는 서버 저장소(U10) 이후 연결. 완료 |
+| U4b | 도시 선택 UI + 저장 (REQ-F-002): 검색창, 자주 쓰는 도시, 결과마다 행정구역·나라 표시, 선택한 도시를 쿠키에 저장해 유지, 첫 방문 선택 안내 | 쿠키는 브라우저(`document.cookie`)에서 저장하고 서버는 읽을 때마다 `parseCity`로 검증. 도시 선택은 서버 저장소에도 저장되어 자동 브리핑 도시로 쓰인다(저장된 도시 > `BRIEF_CITY` > 서울). 공개 데모라 누구나 바꿀 수 있으며 의도된 선택. 완료 |
 | U5a / U5b | 환율 (a) 로직: `fetch` + 정규화 + zod 검증, 통화 인자(`createExchangeWidget(to)`), `parseCurrency`, `fetch` mock 테스트 (b) 카드 UI: 정상·로딩·오류 렌더 테스트, 통화 선택 상자(Client Component, 이미 받은 환율에서 즉시 전환. 한 번에 조회: U5c), page가 `searchParams.to` → `parseCurrency` → `createExchangeWidget`으로 초기값 연결(`loadDashboardResults`) | U5a·U5b 완료. Frankfurter 확정, 기준 USD 고정, 통화 8개 고정 목록 |
 | U6a / U6b | 개발 뉴스 — a 로직 / b 카드 | 항목 병렬 호출 + 타임아웃. U6a·U6b 완료: HN 상위 10건 조회 → 걸러낸 뒤 5건, 링크는 http(s)만(아니면 토론 주소), 카드는 제목을 텍스트로만 렌더하고 링크는 새 탭 + noopener noreferrer |
 | ~~U7a / U7b~~ | ~~GitHub 활동~~ — MVP 제외(번호는 유지). 내가 한 일은 내가 이미 알아 아침 브리핑 가치가 낮고, 사용자 이름 입력 UI와 rate limit·토큰 부담이 크다. 알림(리뷰 요청 등)은 비공개 정보라 공개 데모(REQ-F-013)에 부적합 | 후순위 |
 | U8a / U8b | 오늘의 한마디 — a 로직 / b 카드 | U8a·U8b 완료: 소스 확정 = ZenQuotes(영어, `/api/today`) + MyMemory 한글 자동 번역(무료·키 없음, 하루 5,000자). 번역 실패 시 영어만(null). 결과는 `use cache`로 저장(명언 hours, 번역 성공 days, 실패 minutes). 카드: 영어 원문(blockquote lang=en)+한글 번역("자동 번역" 표시), 번역이 있을 때만 MyMemory 출처 표기(ZenQuotes는 항상), 번역이 없으면 영어만 + 안내 |
-| U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트. **완료**: `POST /api/cron/brief`, Bearer 상수 시간 비교, 인증 실패 시 외부 API 무호출, 날씨 도시는 환경변수 `BRIEF_CITY`(서버 저장소 U10 전까지 임시) |
+| U9 | 브리핑 생성 Route Handler + 토큰 검증 + 위젯 실행 결과 반환 (저장·전송 제외) | `401` / `200` 테스트. **완료**: `POST /api/cron/brief`, Bearer 상수 시간 비교, 인증 실패 시 외부 API 무호출, 날씨 도시는 환경변수 `BRIEF_CITY`(U10 이후에는 대시보드에서 저장한 도시가 우선하는 기본값) |
 | U10 | 스냅샷 저장·조회 (`GET /api/brief`, `GET /api/brief/history`) | **완료**: 저장소 = Upstash Redis(REST, `fetch`만, 의존성 없음). Vercel KV는 종료되어 Upstash로 대체됨. 키 `brief:날짜` + 이력 정렬 집합 `briefs`. 읽은 값은 매번 재검증. **U12 조건**: `save`는 SET 후 ZADD라 원자적이지 않다(멱등) → 저장 실패는 실패로 보고하고 재시도할 것. Upstash 실서비스 호출은 계정 생성 후 U12/U14에서 검증 |
 | U11 | Telegram 전송 (단독 함수, fetch mock) | **완료**: `formatBrief`(평문, 4096자 제한), `sendTelegramMessage`(토큰은 URL 경로라 형식 엄격 검사, 실패는 던지지 않고 reason만 반환·토큰/주소/본문 비노출), `sendBriefToTelegram`(`sent`/`failed`). 가짜 토큰으로 실제 Telegram 호출해 오류 응답 형식(401 `{"ok":false,"error_code":401,"description":"Unauthorized"}`) 확인. 실제 전송 성공은 봇 생성 후 검증. **U12 조건**: cron 응답에는 `telegram: "sent"\|"failed"`만 싣고 reason은 싣지 않는다(공개 Actions 로그 가능성), 저장 성공 후 전송, 전송 실패해도 저장 유지 |
-| U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | **완료**: `runBrief`(저장·전송 동시 시작, 서로 막지 않음), 응답 `{date, widgets, snapshot, telegram}`, 둘 다 성공해야 200 아니면 502. `BRIEF_CITY`는 공개 데모가 쓰기를 막아야 해서(REQ-F-013) 소유자 전용 설정으로 유지. 같은 날 재실행 시 중복 전송은 막지 않음. 서버리스 최대 실행 시간(`maxDuration`)은 배포(U14)에서 확인 |
+| U12 | 브리핑 생성 API에 저장(U10)·전송(U11) 연결 (REQ-F-008 완성) | **완료**: `runBrief`(저장·전송 동시 시작, 서로 막지 않음), 응답 `{date, widgets, snapshot, telegram}`, 둘 다 성공해야 200 아니면 502. `BRIEF_CITY`는 소유자 전용 기본값으로 유지(이후 도시 저장 연동에서 대시보드 선택이 우선하도록 바뀌었고, 도시 저장만 REQ-F-013의 예외로 열어 둠). 같은 날 재실행 시 중복 전송은 막지 않음. 서버리스 최대 실행 시간(`maxDuration`)은 배포(U14)에서 확인 |
 | U13 | 대시보드 마감: 스켈레톤·다크 모드·반응형·이력 목록 조회 연결 | 이력 차트는 제외 (MVP 이후), 차트 라이브러리 설치 금지. **기능 부분 완료**: 오늘 화면에 "지난 브리핑" 목록(최근 14개), `/?date=YYYY-MM-DD`로 저장본을 읽기 전용으로 보기(도시 바꾸기 숨김, 환율 전환은 가능), 날짜는 저장소 접근 전에 엄격 검증하고 잘못된 입력은 화면에 되풀이하지 않음, 화면 전환 시 카드가 새로 만들어지도록 `key`. **디자인 부분(스켈레톤·다크 모드·반응형 다듬기)은 사용자 요청으로 나중에** |
 | U14 | 스케줄 실행 + 배포 + 공개 데모 | **완료**: 예약 실행은 Cloudflare Workers Cron(`worker/`, 09:30 KST, 재시도 없음, 리다이렉트 차단, 시크릿 형식 검사). GitHub Actions 예약은 수 시간 지연되어(2026-10-20 4시간 38분) 제거하고 `.github/workflows/morning-brief.yml`은 수동 실행 전용(권한 없음, 외부 액션 없음, 비밀값은 env로만). 워크플로·Worker 테스트, 배포 절차·점검표(`13_deploy_runbook`) |
 
@@ -83,5 +83,5 @@
 | ~~환율 API 최종 선택~~ → Frankfurter 확정 (U5a, 키·결제 없음. 한국수출입은행은 대안으로만 유지) | 완료 |
 | ~~저장소~~ → Upstash Redis로 확정 (U10). 무료 한도·비활성 정책은 계정 생성 시 공식 페이지에서 확인 | 완료 |
 | ~~오늘의 한마디 소스~~ → ZenQuotes(영어) + MyMemory 한글 자동 번역으로 확정 (U8a). 번역 품질 향상(AI 번역)은 후순위 | 완료 |
-| ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑의 대표 도시 저장은 U10 이후 | U2b·U4b 완료. 자동 브리핑 연결만 U10 이후 |
+| ~~날씨 지역~~ → 사용자가 처음 고른 도시를 대표로 유지, 자유 검색 지원 (U2b·U4b). 자동 브리핑도 저장된 도시를 사용 | 완료 |
 | LLM 요약 포함 여부 | MVP 이후 |
