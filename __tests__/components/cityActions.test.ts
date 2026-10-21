@@ -1,4 +1,5 @@
-import { loadWeatherAction, searchCitiesAction } from '../../src/components/cityActions'
+import { loadWeatherAction, saveBriefCityAction, searchCitiesAction } from '../../src/components/cityActions'
+import { sharedMemoryStore } from '../../src/storage/getSnapshotStore'
 import { POPULAR_CITIES } from '../../src/widgets/weather/city'
 
 const busan = POPULAR_CITIES[1]
@@ -97,5 +98,49 @@ describe('loadWeatherAction', () => {
     const result = await loadWeatherAction(busan)
 
     expect(result.status).toBe('error')
+  })
+})
+
+describe('saveBriefCityAction', () => {
+  const original = process.env.SNAPSHOT_STORE
+
+  beforeEach(() => {
+    process.env.SNAPSHOT_STORE = 'memory'
+    sharedMemoryStore.clear()
+  })
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.SNAPSHOT_STORE
+    else process.env.SNAPSHOT_STORE = original
+    sharedMemoryStore.clear()
+  })
+
+  it('도시를 저장소에 저장한다', async () => {
+    expect(await saveBriefCityAction(busan)).toEqual({ status: 'ok' })
+    expect(await sharedMemoryStore.getCity()).toEqual(busan)
+  })
+
+  it.each([
+    ['null', null],
+    ['문자열', 'Busan'],
+    ['위도 범위 초과', { ...busan, latitude: 999 }],
+  ])('잘못된 도시는 저장하지 않고 error를 반환한다: %s', async (_name, city) => {
+    expect((await saveBriefCityAction(city)).status).toBe('error')
+    expect(await sharedMemoryStore.getCity()).toBeNull()
+  })
+
+  it('저장소가 설정되지 않았으면 던지지 않고 error를 반환한다', async () => {
+    delete process.env.SNAPSHOT_STORE
+    for (const name of ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'KV_REST_API_URL', 'KV_REST_API_TOKEN']) {
+      delete process.env[name]
+    }
+
+    expect((await saveBriefCityAction(busan)).status).toBe('error')
+  })
+
+  it('저장이 실패하면 던지지 않고 error를 반환한다', async () => {
+    jest.spyOn(sharedMemoryStore, 'saveCity').mockRejectedValue(new Error('Upstash 응답 오류: 500'))
+
+    expect(await saveBriefCityAction(busan)).toEqual({ status: 'error', message: 'Upstash 응답 오류: 500' })
   })
 })

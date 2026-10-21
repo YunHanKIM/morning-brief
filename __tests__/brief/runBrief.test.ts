@@ -84,6 +84,51 @@ describe('runBrief', () => {
     expect(result).toMatchObject({ snapshot: 'saved', telegram: 'sent' })
   })
 
+  describe('브리핑 도시', () => {
+    const tokyo = { name: 'Tokyo', region: '도쿄 도', country: '일본', latitude: 35.7, longitude: 139.7, timezone: 'Asia/Tokyo' }
+
+    it('저장소에 저장된 도시가 BRIEF_CITY보다 우선한다', async () => {
+      mockAllApis()
+      const store = createMemoryStore()
+      await store.saveCity(tokyo)
+
+      await run({ store, cityValue: '부산' })
+
+      expect(await store.get('2026-10-13')).toMatchObject({ city: tokyo })
+    })
+
+    it('저장된 도시가 없으면 BRIEF_CITY를 쓴다', async () => {
+      mockAllApis()
+      const store = createMemoryStore()
+
+      await run({ store, cityValue: '부산' })
+
+      expect(await store.get('2026-10-13')).toMatchObject({ city: POPULAR_CITIES[1] })
+    })
+
+    it('도시를 읽지 못해도 BRIEF_CITY로 브리핑을 보내고 이유를 로그에 남긴다', async () => {
+      mockAllApis()
+      const store: SnapshotStore = {
+        ...createMemoryStore(),
+        getCity: async () => {
+          throw new Error('Upstash 응답 오류: 500')
+        },
+      }
+
+      const result = await run({ store, cityValue: '부산' })
+
+      expect(result).toMatchObject({ snapshot: 'saved', telegram: 'sent' })
+      expect(await store.get('2026-10-13')).toMatchObject({ city: POPULAR_CITIES[1] })
+      expect(errorSpy.mock.calls.map((args) => args.join(' ')).join('\n')).toContain('Upstash 응답 오류: 500')
+    })
+
+    it('저장소가 없어도(null) BRIEF_CITY로 보낸다', async () => {
+      mockAllApis()
+
+      expect(await run({ store: null })).toMatchObject({ telegram: 'sent' })
+    })
+  })
+
   describe('저장과 전송은 서로 막지 않는다', () => {
     it('저장이 실패해도 Telegram은 보낸다', async () => {
       const spy = mockAllApis()

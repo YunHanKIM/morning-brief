@@ -1,12 +1,17 @@
 import { z } from 'zod'
 import type { Brief } from '../brief/generateBrief'
+import type { City } from '../widgets/weather/city'
 
-// 하루치 브리핑(스냅샷)을 넣고 꺼내는 세 동작. 저장소가 무엇이든(Upstash, 메모리) 이 모양만 지키면 된다
+// 하루치 브리핑(스냅샷)을 넣고 꺼내는 세 동작과, 자동 브리핑이 쓸 도시 하나를 넣고 꺼내는 두 동작.
+// 저장소가 무엇이든(Upstash, 메모리) 이 모양만 지키면 된다
 export interface SnapshotStore {
   save(brief: Brief): Promise<void>
   get(date: string): Promise<Brief | null>
   // 최근 날짜부터 limit개
   listDates(limit: number): Promise<string[]>
+  // 자동 브리핑 도시. 저장된 적이 없으면 null
+  saveCity(city: City): Promise<void>
+  getCity(): Promise<City | null>
 }
 
 const dateSchema = z.iso.date()

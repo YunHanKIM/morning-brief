@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { WidgetResult } from '../widgets/types'
 import type { City } from '../widgets/weather/city'
 import type { WeatherData } from '../widgets/weather/normalize'
-import { loadWeatherAction } from './cityActions'
+import { loadWeatherAction, saveBriefCityAction } from './cityActions'
 import { CityPicker } from './CityPicker'
 import { saveCityCookie } from './cityCookie'
 import { errorText, link, note, section, sectionTitle, status } from './styles'
@@ -40,6 +40,9 @@ export function WeatherCard({
         setPending(false)
         setChoosing(false)
       })
+    // Server Action은 순서대로 실행되므로 날씨 조회를 먼저 보낸다(저장이 느려도 날씨를 막지 않는다).
+    // 자동 브리핑 도시로 저장하는 것이라 실패해도 화면에는 영향이 없다
+    saveBriefCityAction(next).catch(() => {})
   }
 
   const busy = loading || pending

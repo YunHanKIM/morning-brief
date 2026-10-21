@@ -1,6 +1,6 @@
 /** @jest-environment jsdom */
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { loadWeatherAction } from '../../src/components/cityActions'
+import { loadWeatherAction, saveBriefCityAction } from '../../src/components/cityActions'
 import { CITY_COOKIE, readCity } from '../../src/components/cityCookie'
 import { WeatherCard } from '../../src/components/WeatherCard'
 import { POPULAR_CITIES } from '../../src/widgets/weather/city'
@@ -10,8 +10,10 @@ import type { WidgetResult } from '../../src/widgets/types'
 jest.mock('../../src/components/cityActions', () => ({
   searchCitiesAction: jest.fn(),
   loadWeatherAction: jest.fn(),
+  saveBriefCityAction: jest.fn(),
 }))
 const loadWeatherMock = jest.mocked(loadWeatherAction)
+const saveBriefCityMock = jest.mocked(saveBriefCityAction)
 
 const [seoul, busan, , , , , , jeju] = POPULAR_CITIES
 const seoulData: WeatherData = { temperature: 18.4, condition: '맑음', high: 22, low: 11 }
@@ -35,6 +37,8 @@ const savedCity = () => {
 describe('WeatherCard', () => {
   beforeEach(() => {
     loadWeatherMock.mockReset()
+    saveBriefCityMock.mockReset()
+    saveBriefCityMock.mockResolvedValue({ status: 'ok' })
     document.cookie = `${CITY_COOKIE}=; path=/; max-age=0`
   })
 
@@ -102,6 +106,29 @@ describe('WeatherCard', () => {
       expect(screen.getByText('부산 · 부산광역시')).toBeTruthy()
       expect(savedCity()).toEqual(busan)
       expect(screen.queryByLabelText('도시 검색')).toBeNull()
+    })
+
+    it('도시를 고르면 자동 브리핑 도시로도 서버에 저장한다', async () => {
+      loadWeatherMock.mockResolvedValue(ok(busanData))
+      render(<WeatherCard city={null} />)
+
+      fireEvent.click(screen.getByRole('button', { name: '부산' }))
+
+      expect(await screen.findByText('21°')).toBeTruthy()
+      expect(saveBriefCityMock).toHaveBeenCalledWith(busan)
+      // 저장이 날씨 조회 앞에 서면 느린 저장이 날씨를 막는다
+      expect(loadWeatherMock.mock.invocationCallOrder[0]).toBeLessThan(saveBriefCityMock.mock.invocationCallOrder[0])
+    })
+
+    it('서버 저장이 실패(거부)해도 날씨는 그대로 보여준다', async () => {
+      loadWeatherMock.mockResolvedValue(ok(busanData))
+      saveBriefCityMock.mockRejectedValue(new Error('network'))
+      render(<WeatherCard city={null} />)
+
+      fireEvent.click(screen.getByRole('button', { name: '부산' }))
+
+      expect(await screen.findByText('21°')).toBeTruthy()
+      expect(screen.queryByRole('alert')).toBeNull()
     })
   })
 

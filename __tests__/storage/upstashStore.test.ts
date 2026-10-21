@@ -1,4 +1,5 @@
 import { createUpstashStore } from '../../src/storage/upstashStore'
+import { POPULAR_CITIES } from '../../src/widgets/weather/city'
 import { makeBrief } from '../../__fixtures__/brief'
 
 const URL_ = 'https://example-123.upstash.io'
@@ -142,6 +143,42 @@ describe('createUpstashStore', () => {
       await expect(createUpstashStore({ url: URL_, token: TOKEN }).listDates(limit)).rejects.toThrow()
       expect(spy).not.toHaveBeenCalled()
     })
+  })
+
+  describe('브리핑 도시', () => {
+    it('도시를 JSON으로 한 키에 저장한다', async () => {
+      const spy = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => json({ result: 'OK' }))
+
+      await createUpstashStore({ url: URL_, token: TOKEN }).saveCity(POPULAR_CITIES[1])
+
+      expect(bodiesOf(spy)).toEqual([['SET', 'brief-city', JSON.stringify(POPULAR_CITIES[1])]])
+    })
+
+    it('저장된 도시를 꺼낸다', async () => {
+      const spy = jest
+        .spyOn(globalThis, 'fetch')
+        .mockImplementation(async () => json({ result: JSON.stringify(POPULAR_CITIES[1]) }))
+
+      expect(await createUpstashStore({ url: URL_, token: TOKEN }).getCity()).toEqual(POPULAR_CITIES[1])
+      expect(bodiesOf(spy)).toEqual([['GET', 'brief-city']])
+    })
+
+    it('저장된 값이 없으면 null이다', async () => {
+      jest.spyOn(globalThis, 'fetch').mockImplementation(async () => json({ result: null }))
+
+      expect(await createUpstashStore({ url: URL_, token: TOKEN }).getCity()).toBeNull()
+    })
+
+    it.each([['깨진 JSON', 'not json'], ['도시 모양이 아님', '{"name":"x"}'], ['문자열이 아님', 5]])(
+      '저장된 값을 읽을 수 없으면 오류다: %s',
+      async (_name, result) => {
+        jest.spyOn(globalThis, 'fetch').mockImplementation(async () => json({ result }))
+
+        await expect(createUpstashStore({ url: URL_, token: TOKEN }).getCity()).rejects.toThrow(
+          '저장된 도시를 읽을 수 없습니다',
+        )
+      },
+    )
   })
 
   describe('오류 처리', () => {

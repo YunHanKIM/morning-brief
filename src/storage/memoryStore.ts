@@ -1,4 +1,5 @@
 import { assertDate, assertLimit, type SnapshotStore } from './snapshotStore'
+import { parseCity, type City } from '../widgets/weather/city'
 import { parseSnapshot } from './snapshotSchema'
 
 export type MemoryStore = SnapshotStore & { clear(): void }
@@ -6,6 +7,7 @@ export type MemoryStore = SnapshotStore & { clear(): void }
 // 개발·테스트용. 서버가 다시 시작하면 사라진다. JSON 문자열로 보관해 꺼낸 값을 바꿔도 원본이 안 바뀐다
 export function createMemoryStore(): MemoryStore {
   const snapshots = new Map<string, string>()
+  let city: string | null = null
 
   return {
     async save(brief) {
@@ -27,8 +29,17 @@ export function createMemoryStore(): MemoryStore {
       return [...snapshots.keys()].sort().reverse().slice(0, limit)
     },
 
+    async saveCity(next: City) {
+      city = JSON.stringify(next)
+    },
+
+    async getCity() {
+      return city === null ? null : parseCity(JSON.parse(city))
+    },
+
     clear() {
       snapshots.clear()
+      city = null
     },
   }
 }

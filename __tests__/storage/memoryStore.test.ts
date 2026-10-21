@@ -1,4 +1,5 @@
 import { createMemoryStore } from '../../src/storage/memoryStore'
+import { POPULAR_CITIES } from '../../src/widgets/weather/city'
 import { makeBrief } from '../../__fixtures__/brief'
 
 describe('createMemoryStore', () => {
@@ -50,4 +51,26 @@ describe('createMemoryStore', () => {
       await expect(store.save({ ...makeBrief(), date })).rejects.toThrow()
     },
   )
+
+  describe('브리핑 도시', () => {
+    it('저장하기 전에는 null이다', async () => {
+      expect(await createMemoryStore().getCity()).toBeNull()
+    })
+
+    it('저장한 도시를 꺼내고, 다시 저장하면 덮어쓴다', async () => {
+      const store = createMemoryStore()
+      await store.saveCity(POPULAR_CITIES[1])
+      expect(await store.getCity()).toEqual(POPULAR_CITIES[1])
+
+      await store.saveCity(POPULAR_CITIES[2])
+      expect(await store.getCity()).toEqual(POPULAR_CITIES[2])
+    })
+
+    it('clear하면 도시도 지워진다', async () => {
+      const store = createMemoryStore()
+      await store.saveCity(POPULAR_CITIES[1])
+      store.clear()
+      expect(await store.getCity()).toBeNull()
+    })
+  })
 })

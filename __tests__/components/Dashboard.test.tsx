@@ -7,6 +7,7 @@ import { POPULAR_CITIES } from '../../src/widgets/weather/city'
 jest.mock('../../src/components/cityActions', () => ({
   searchCitiesAction: jest.fn(),
   loadWeatherAction: jest.fn(),
+  saveBriefCityAction: jest.fn().mockResolvedValue({ status: 'ok' }),
 }))
 
 const seoul = POPULAR_CITIES[0]

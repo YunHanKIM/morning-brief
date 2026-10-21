@@ -1,8 +1,10 @@
 import { assertDate, assertLimit, isValidDate, type SnapshotStore } from './snapshotStore'
+import { parseCity } from '../widgets/weather/city'
 import { parseSnapshot } from './snapshotSchema'
 
 const TIMEOUT_MS = 5000
 const HISTORY_KEY = 'briefs'
+const CITY_KEY = 'brief-city'
 const snapshotKey = (date: string) => `brief:${date}`
 
 // Upstash Redis REST API: POST에 [명령, 인자...] JSON 배열을 보내고 Authorization: Bearer 토큰을 쓴다.
@@ -69,6 +71,26 @@ export function createUpstashStore({ url, token }: { url: string; token: string 
       const result = await command(['ZRANGE', HISTORY_KEY, '0', String(limit - 1), 'REV'])
       if (!Array.isArray(result)) throw new Error('Upstash 응답 형식이 올바르지 않습니다')
       return result.filter(isValidDate)
+    },
+
+    async saveCity(city) {
+      await command(['SET', CITY_KEY, JSON.stringify(city)])
+    },
+
+    async getCity() {
+      const result = await command(['GET', CITY_KEY])
+      if (result === null) return null
+      if (typeof result !== 'string') throw new Error('저장된 도시를 읽을 수 없습니다')
+
+      let value: unknown
+      try {
+        value = JSON.parse(result)
+      } catch {
+        throw new Error('저장된 도시를 읽을 수 없습니다')
+      }
+      const city = parseCity(value)
+      if (!city) throw new Error('저장된 도시를 읽을 수 없습니다')
+      return city
     },
   }
 }
