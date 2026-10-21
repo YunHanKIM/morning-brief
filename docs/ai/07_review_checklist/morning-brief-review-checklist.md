@@ -8,7 +8,7 @@
 
 ## Morning Brief 전용 항목
 
-- [ ] 새 위젯이 `fetch → normalize → render` 구조를 따르고 `registry.ts`에 등록됐는가
+- [ ] 새 위젯이 `fetch → normalize → render` 구조를 따르고 `src/widgets/<이름>/`에 모여 있는가
 - [ ] 외부 API 응답을 zod로 검증하는가, 검증 실패 시 해당 위젯만 오류 상태가 되는가
 - [ ] 위젯 로딩·빈 데이터·오류 세 가지 상태가 모두 있는가
 - [ ] 외부 호출에 타임아웃이 있는가

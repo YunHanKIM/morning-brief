@@ -3,7 +3,7 @@
 이 폴더는 AI 워커(frontend-expert 등)가 morning-brief 작업 전 읽는 정본 문서 모음이다.
 Morning Brief는 공개 API 데이터를 모아 매일 아침 요약을 대시보드와 Telegram으로 제공하는 포트폴리오 프로젝트다.
 
-> 현재 단계: **프로젝트 초기화 완료, 기능 코드 없음**. create-next-app 기본 템플릿과 Jest 설정까지만 있다.
+> 현재 단계: **MVP 구현·배포 완료**(위젯 4종, 브리핑 생성·저장·Telegram 전송, 대시보드, Cloudflare Cron 예약 실행).
 > 아래 "초안" 문서는 확정된 기획(2026-10-11)을 적은 것이며, 문서 안의 "현재"와 "계획" 표기를 구분해 읽는다.
 > 구현이 진행되면 실제 코드와 대조해 갱신한다.
 
@@ -19,7 +19,7 @@ Morning Brief는 공개 API 데이터를 모아 매일 아침 요약을 대시�
 | `07_review_checklist/` | 제출 전 자가검토 체크리스트 | 초안 |
 | `08_domain_glossary/` | 용어 단일 출처 | 초안 |
 | `09_api_contract/` | 외부 API 소비 계약 + 내부 cron 엔드포인트 | 초안 |
-| `10_data_model/` | 브리핑 스냅샷·위젯 결과 모델 | 미정 |
+| `10_data_model/` | 브리핑 스냅샷·위젯 결과 모델 | 작성됨 |
 | `11_changelog/` | 변경 이력 | 초안 |
 | `12_known_issues/` | 함정·안티패턴 | 미정 |
 | `13_deploy_runbook/` | 배포 절차 | 초안 |

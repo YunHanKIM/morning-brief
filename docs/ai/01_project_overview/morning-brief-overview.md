@@ -10,7 +10,7 @@
 
 - 외부 API 연동과 데이터 정규화 (위젯 플러그인 구조)
 - 부분 실패에 강한 비동기 처리 (`Promise.allSettled`, 위젯 단위 오류 상태)
-- 스케줄링 자동화 (GitHub Actions cron → 보호된 API 엔드포인트) 와 알림 (Telegram Bot)
+- 스케줄링 자동화 (Cloudflare Workers Cron → 보호된 API 엔드포인트. GitHub Actions는 수동 실행용) 와 알림 (Telegram Bot)
 - 반응형·다크 모드·로딩 스켈레톤을 갖춘 대시보드 UI
 
 ## 핵심 흐름
@@ -32,4 +32,3 @@
 
 - 환율 API: 키 없이 쓰는 무료 API 우선, 한국수출입은행 API는 대안
 - LLM 요약 포함 여부 (MVP 이후 결정)
-- 저장소: Supabase(Postgres) 또는 Vercel KV 중 택일 — `10_data_model` 작성 시 확정
